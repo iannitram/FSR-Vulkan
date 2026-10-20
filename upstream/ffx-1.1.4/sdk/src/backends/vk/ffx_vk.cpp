@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <mutex> // bbport: libc++ does not include it transitively
 #include <FidelityFX/host/ffx_interface.h>
 #include <FidelityFX/host/ffx_util.h>
 #include <FidelityFX/host/ffx_assert.h>
@@ -434,6 +435,15 @@ uint32_t findMemoryTypeIndex(
         // forbids allocating such a type in that case (VUID-02790).
         if (!deviceCoherentMemoryEnabled &&
             (memoryProperties & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD))
+            continue;
+
+        // Protected memory types (VK_MEMORY_PROPERTY_PROTECTED_BIT) need the protectedMemory
+        // feature and protected command buffers; read from an ordinary command buffer they return
+        // garbage. RADV lists device-local protected types after the plain ones on some GPUs (Ryzen
+        // Z1 Extreme / PHOENIX: types 7-10), and this loop keeps the last match, so FSR's
+        // device-local resources landed in protected memory: full-screen noise (VUID-01872).
+        if ((memoryProperties & VK_MEMORY_PROPERTY_PROTECTED_BIT) &&
+            !(requestedProperties & VK_MEMORY_PROPERTY_PROTECTED_BIT))
             continue;
 
         if ((memRequirements.memoryTypeBits & (1u << i)) &&
