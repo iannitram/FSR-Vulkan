@@ -2,7 +2,7 @@
 
 - **Repo:** iannitram/FSR-Vulkan (public fork). **Kind:** C/C++ library built with CMake: a portable Vulkan port of AMD FidelityFX FSR (upscaling, frame generation, an experimental FSR 4 provider).
 - **Upstream:** FireBurn/FSR-Vulkan (`upstream/main`). **Integration branch:** `main`.
-- **Describes commit:** `0c076be` (2026-10-26).
+- **Describes commit:** `28e5d9a` (2026-10-26).
 
 A reusable module extracted from a Q2RTX integration. The application owns the Vulkan instance, device, queues, command buffers and images; the module owns the FidelityFX contexts and their internal resources and records work into an application-provided command buffer. Its own sources are MIT; vendored AMD sources carry their own MIT notices (see `NOTICE.md`, `UPSTREAM.md`).
 
@@ -21,11 +21,12 @@ A reusable module extracted from a Q2RTX integration. The application owns the V
 | `src/ffx_1_1_4_portability.hpp` | Portability shim for the vendored 1.1.4 sources |
 | `upstream/ffx-1.1.4/`, `upstream/ffx-2.3.0/` | Vendored AMD FidelityFX SDK subsets with `ORIGINAL_SHA256SUMS` and `CURRENT_SHA256SUMS` provenance files |
 | `generated/ffx-1.1.4/vk`, `generated/ffx-2.3.0/vk` | Checked-in generated SPIR-V shader tables with manifests |
-| `tools/` | `capability_probe.c` (device probe executable); `generate_fsr3_3_1_5_spirv.sh`, `generate_fsr3_3_1_6_framegen_spirv.sh` (regenerate shaders) |
-| `tests/` | 35 to 36 ctest programs (C and C++), plus CMake scripts for SPIR-V validation and SHA-256 checks |
+| `tools/` | `capability_probe.c` (device probe executable); `generate_*` shell scripts (regenerate SPIR-V), `import_*` shell scripts (pull AMD sources), `package_*` and `prepare_*` Python scripts (bundle SPIR-V, prepare vendored sources) |
+| `tests/` | 22 C and C++ test programs, plus CMake scripts for SPIR-V validation, SHA-256 checks and the installed-package consumer; `CMakeLists.txt` registers them as the 38 `add_test` entries |
 | `examples/` | `consumer`, `full-stack`, `installed-full-stack` (integration-contract examples built against the module or its installed package) |
 | `cmake/ffx-vulkan-config.cmake.in` | Package config for `find_package(ffx-vulkan)` |
 | `README.md`, `UPSTREAM.md`, `NOTICE.md`, `PUBLISHING.md`, `LICENSE.txt` | Status and design boundary; provenance and plan; notices; how the standalone tree is published; MIT license |
+| `AGENTS.fork.md`, `CHANGELOG.fork.md`, `CLAUDE.md`, `PIPELINE.md`, `docs/code-map.md` | Ours, not upstream's: agent rules, change log, stage record and this map |
 | `VP_VULKANINFO_*.json` | A captured Vulkan profile dump for one AMD GPU (reference data) |
 
 ## How it fits together
@@ -51,14 +52,14 @@ flowchart TD
 
 ## Where our work is
 
-`git log upstream/main..HEAD`: two commits, 119 added lines, two files.
+`git log upstream/main..HEAD`: four commits. The code changes are the first two (119 added lines in two files); the other two add our own docs files (`docs/code-map.md`, then the stage record, agent rules and change log).
 
 | Commit | Files | Change |
 |---|---|---|
 | `cc76692` wip: FSR 4 profiling switches | `src/ffx_vk_fsr4_v07.c` (+109), `upstream/ffx-1.1.4/sdk/src/backends/vk/ffx_vk.cpp` (+10) | Opt-in env switches `BB_FSR4_PROFILE` (GPU time per pass via timestamps) and `BB_FSR4_STATS` (pipeline executable statistics; the device must enable `pipelineExecutableInfo`) |
 | `0c076be` | merge | Merges the `exp/fsr4-profile-stats-1020` branch into `main` |
 
-Everything else matches upstream. The pipeline repo's notes mention a branch `fix/skip-protected-memory-types` behind upstream PR #1; it is not present on this fork's remote (only `main` exists there, checked 2026-10-26). Sync policy there is fast-forward only; `main` is now 2 commits ahead of upstream, so a pure fast-forward of a mirror no longer applies.
+Everything else matches upstream. A branch `fix/skip-protected-memory-types` (upstream PR #1) is not present on this fork's remote; only `main` exists there (checked 2026-10-28). `main` is ahead of upstream, so a pure fast-forward of a mirror no longer applies.
 
 ## Build and test
 
