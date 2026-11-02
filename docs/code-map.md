@@ -1,93 +1,124 @@
 # FSR-Vulkan code map
 
-- **Repo:** iannitram/FSR-Vulkan (public fork). **Kind:** C/C++ library built with CMake: a portable Vulkan port of AMD FidelityFX FSR (upscaling, frame generation, an experimental FSR 4 provider).
-- **Upstream:** FireBurn/FSR-Vulkan (`upstream/main`). **Integration branch:** `main`.
-- **Describes commit:** `28e5d9a` (2026-10-26).
+- **Repo:** iannitram/FSR-Vulkan (public fork). **Kind:** fork built our way: our shared upscaler and frame-generation library (`uscale`) for the `-universal` games, a C11 library built with CMake on top of upstream's portable Vulkan scalers.
+- **Upstream:** FireBurn/UniversalScalers-Vulkan (formerly FireBurn/FSR-Vulkan), `upstream/main`, synced daily. **Integration branch:** `main`.
+- **Describes:** main after the Roadmap commit of 2026-11-02 (upstream at `69fecd7`).
 
-A reusable module extracted from a Q2RTX integration. The application owns the Vulkan instance, device, queues, command buffers and images; the module owns the FidelityFX contexts and their internal resources and records work into an application-provided command buffer. Its own sources are MIT; vendored AMD sources carry their own MIT notices (see `NOTICE.md`, `UPSTREAM.md`).
+The game owns the Vulkan instance, device, queues, command buffers, swapchain and images. `uscale` picks a backend, records upscaling and frame-generation work into the game's command buffer, and never submits or presents. How FSR 4, XeSS and DLSS reach the GPU: `docs/adr/0001-vendor-paths.md`.
 
-## Layout
+## Ours: `universal/` (the uscale library)
 
-| Path | What it owns |
-|---|---|
-| `CMakeLists.txt` | All targets, options (`FFX_VK_PORTABLE_BUILD_*`), install and CMake package export; 38 `add_test` entries |
-| `include/` | Public headers: `ffx_vk_portable.h` (core C contract, capability probe types), `ffx_vk_fsr3_3_1_5_*.h` (bridge, bundle, catalog, descriptor, pipeline, reflection), `ffx_vk_fsr4_v07*.h`, `ffx_vk_framegeneration_presenter.h`, `ffx_vk_temporal_lifecycle.h`, `ffx_vk_rayregeneration_contract.h`, `ffx_vk_radiancecache_contract.h`, `ffx_vk_vulkan_compat.h` |
-| `src/ffx_vk_portable.c`, `ffx_vk_fsr3_portable.cpp` | Public API implementation and the FSR 3.1.4 host scheduler glue |
-| `src/ffx_vk_fsr3_3_1_5_*` | SDK 2.3 FSR 3.1.5 upscaler: bridge, SPIR-V bundle, catalog, descriptor layout, pipelines, reflection |
-| `src/ffx_vk_fsr3_3_1_6_framegen*.cpp` | SDK 2.3 FSR 3.1.6 analytical frame generation (optical flow plus interpolation) and its shader blob tables |
-| `src/ffx_vk_fsr4_v07*.c` | Experimental source-v07 FSR 4 INT8/DOT4 Vulkan compute provider (`ffxFsr4V07...` exports), asset helper, schedule |
-| `src/ffx_vk_framegeneration_presenter.c` | Policy library for a generated-then-real two-acquire present plan; no swapchain ownership |
-| `src/ffx_vk_temporal_lifecycle.c`, `..._rayregeneration_contract.c`, `..._radiancecache_contract.c` | Input validators and lifecycle helpers; not denoisers or neural inference |
-| `src/ffx_1_1_4_portability.hpp` | Portability shim for the vendored 1.1.4 sources |
-| `upstream/ffx-1.1.4/`, `upstream/ffx-2.3.0/` | Vendored AMD FidelityFX SDK subsets with `ORIGINAL_SHA256SUMS` and `CURRENT_SHA256SUMS` provenance files |
-| `generated/ffx-1.1.4/vk`, `generated/ffx-2.3.0/vk` | Checked-in generated SPIR-V shader tables with manifests |
-| `tools/` | `capability_probe.c` (device probe executable); `generate_*` shell scripts (regenerate SPIR-V), `import_*` shell scripts (pull AMD sources), `package_*` and `prepare_*` Python scripts (bundle SPIR-V, prepare vendored sources) |
-| `tests/` | 22 C and C++ test programs, plus CMake scripts for SPIR-V validation, SHA-256 checks and the installed-package consumer; `CMakeLists.txt` registers them as the 38 `add_test` entries |
-| `examples/` | `consumer`, `full-stack`, `installed-full-stack` (integration-contract examples built against the module or its installed package) |
-| `cmake/ffx-vulkan-config.cmake.in` | Package config for `find_package(ffx-vulkan)` |
-| `README.md`, `UPSTREAM.md`, `NOTICE.md`, `PUBLISHING.md`, `LICENSE.txt` | Status and design boundary; provenance and plan; notices; how the standalone tree is published; MIT license |
-| `AGENTS.fork.md`, `CHANGELOG.fork.md`, `CLAUDE.md`, `PIPELINE.md`, `docs/code-map.md` | Ours, not upstream's: agent rules, change log, stage record and this map |
-| `VP_VULKANINFO_*.json` | A captured Vulkan profile dump for one AMD GPU (reference data) |
+Status: **present** = built and tested; **stub** = file exists, returns `USCALE_ERROR_NOT_IMPLEMENTED`; **planned** = no file yet. An issue that builds a module moves its status in the same PR.
 
-## How it fits together
+| Path | What it owns | Status | Roadmap |
+|---|---|---|---|
+| `universal/CMakeLists.txt` | Targets `uscale_core` (`uscale::core`, pure half), `uscale_vulkan` (`uscale::uscale`, Vulkan half); options `USCALE_BUILD_TESTS`, `USCALE_WITH_VULKAN` (on when Vulkan is found), `USCALE_WITH_FFX` (off; links upstream targets); our lint (warnings are errors); every `tests/*_test.c` becomes a CTest test | present (FFX wiring stub) | 1, 2.05 |
+| `universal/include/uscale.h` | Pure API: version macros, `uscale_result`, `uscale_backend`, `uscale_quality`, `uscale_extent`, `uscale_device_caps`, profiling flag bits; `uscale_version`, `uscale_result_name`, `uscale_backend_name`, `uscale_render_extent`, `uscale_select_backend`, `uscale_profile_flags_from_env` | present | 1 |
+| `universal/include/uscale_vulkan.h` | Vulkan API: `uscale_image`, `uscale_context_create_info`, `uscale_upscale_info`, `uscale_framegen_info`; `uscale_query_caps`, `uscale_context_create`, `uscale_context_backend`, `uscale_record_upscale`, `uscale_record_framegen`, `uscale_retire_frame`, `uscale_context_destroy` | present | 1 |
+| `universal/src/uscale_version.c` | `uscale_version` | present | 1 |
+| `universal/src/uscale_names.c` | `uscale_result_name`, `uscale_backend_name` | stub | 2.01 |
+| `universal/src/uscale_render_extent.c` | `uscale_render_extent` | stub | 2.02 |
+| `universal/src/uscale_select.c` | `uscale_select_backend` | stub | 2.03 |
+| `universal/src/uscale_profile.c` | `uscale_profile_flags_from_env` | stub | 2.04 |
+| `universal/src/uscale_caps.c` | `uscale_query_caps`: vendor, integer dot product, FP16, MoltenVK, FSR 4 assets, vendor runtimes | stub | 3.01, 5.04, 5.06 |
+| `universal/src/uscale_context.c` | Context lifecycle; picks the backend with `uscale_select_backend`, falls back to FSR 3 if a backend's create fails; routes record calls | stub | 3.02 |
+| `universal/src/backend.h` | Internal backend table `uscale_backend_ops` (create, record_upscale, destroy) and the frame-generation calls | present | 1 |
+| `universal/src/backend_fsr3.c` | FSR 3 upscale through `ffx-vulkan::fsr3-vk-backend-1.1.4` | stub | 3.03, 3.04 |
+| `universal/src/framegen_fsr3.c` | Frame generation through `ffx-vulkan::fsr3-vk-framegeneration-3.1.6` and `ffx-vulkan::framegeneration-presenter-policy` | stub | 3.05 |
+| `universal/src/backend_fsr4.c` | FSR 4 through `ffx-vulkan::fsr4-v07-vulkan` and `ffx-vulkan::fsr4-v07-assets`, assets from `fsr4_asset_dir` | stub | 5.03 |
+| `universal/src/runtime_loader.c`, `.h` | Opens a vendor runtime by name list (`dlopen`, `LoadLibrary`), resolves symbols | stub | 5.02 |
+| `universal/src/backend_xess.c` | XeSS through Intel's runtime | stub | 5.05 |
+| `universal/src/backend_dlss.c` | DLSS through NVIDIA's runtime (NGX Vulkan) | stub | 5.07 |
+| `universal/tests/uscale_test.h` | Test harness: `CHECK`, `CHECK_INT`, `CHECK_STR`, `USCALE_TEST_END` | present | 1 |
+| `universal/tests/uscale_*_test.c` | Pure tests, run on every platform | present (version) | 2.x |
+| `universal/tests/uscale_vk_*_test.c` | Tests that need the Vulkan half (built only with `USCALE_WITH_VULKAN`) | present (link) | 3.x, 5.x |
+| `universal/examples/minimal/` | The example consumer from the integration guide | planned | 6.01 |
+| `docs/integration.md` | How a `-universal` game adds and calls `uscale` | planned | 6.01 |
+| `docs/licences.md` | What each vendor path lets us ship | stub | 5.01 |
+| `.github/workflows/fork-ci.yml` | Our CI: `universal/` on Ubuntu, Windows and macOS; checks no recovered target was built | present | 1, 2.06, 4.01, 4.02 |
+
+### How it fits together
 
 ```mermaid
 flowchart TD
-  app[application: owns instance, device, queues, cmd buffers]
-  app --> portable[ffx-vulkan::portable: public C contract + probe]
-  portable --> host[fsr3-host-1.1.4 scheduler]
-  host --> backend[fsr3-vk-backend-1.1.4 compute backend]
-  portable --> up315[FSR 3.1.5 bridge: upscaler]
-  portable --> fg316[fsr3-vk-framegeneration-3.1.6]
-  portable --> fsr4[fsr4-v07-vulkan + fsr4-v07-assets]
-  portable --> pres[framegeneration-presenter-policy]
-  portable --> val[rayregeneration / radiancecache contracts, temporal-lifecycle]
-  backend --> up[(upstream/ + generated/ shader tables)]
+  game[game renderer: owns device, queues, cmd buffers, swapchain]
+  game --> api[uscale.h + uscale_vulkan.h]
+  api --> sel[uscale_select_backend: AUTO = DLSS, FSR 4, XeSS, FSR 3]
+  api --> ctx[uscale_context: backend table, fallback to FSR 3]
+  ctx --> fsr3[backend_fsr3]
+  ctx --> fsr4[backend_fsr4]
+  ctx --> xess[backend_xess]
+  ctx --> dlss[backend_dlss]
+  ctx --> fg[framegen_fsr3]
+  fsr3 --> up3[(upstream fsr3-vk-backend-1.1.4)]
+  fg --> upfg[(upstream fsr3-vk-framegeneration-3.1.6 + presenter policy)]
+  fsr4 --> up4[(upstream fsr4-v07-vulkan + game's asset folder)]
+  xess --> loader[runtime_loader]
+  dlss --> loader
+  loader --> vend[(vendor runtime on the player's machine)]
 ```
 
-- Target names are `ffx-vulkan::<name>` aliases; `ffx-vulkan::effects` is an interface target that gathers the effect libraries.
-- Typical lifecycle for frame generation: `create -> record prepare -> record dispatch -> retire frame -> destroy`; retire only after the application's GPU fence signals.
-- The module never carries the FSR 4 model payload; the application supplies one coherent asset set. Without it the suite has 35 tests, with it 36.
-- Presentation, queue submission and pacing stay application-owned. The upstream Win32-only swapchain frame-generation callback is deliberately left null.
+- `USCALE_WITH_FFX=ON` adds the repo root with `EXCLUDE_FROM_ALL` (upstream tests off) and links only the upstream targets in the diagram, so `xess-recovered`, `dlss-contract` and the d4r shaders are never compiled (ruling of 2026-11-01).
+- Lifecycle: `uscale_query_caps -> uscale_context_create -> (per frame) uscale_record_upscale [-> uscale_record_framegen] -> uscale_retire_frame after the game's fence -> uscale_context_destroy`.
+
+## Upstream's tree (read, link, do not edit)
+
+| Path | What it owns | We use it |
+|---|---|---|
+| `CMakeLists.txt` | All upstream targets (`ffx-vulkan::<name>`), options `FFX_VK_PORTABLE_BUILD_*`, install and package export | through `USCALE_WITH_FFX` |
+| `include/ffx_vk_portable.h`, `src/ffx_vk_portable.c`, `src/ffx_vk_fsr3_portable.cpp` | Core C contract, capability probe, FSR 3.1.4 host glue | yes |
+| `include/`, `src/ffx_vk_fsr3_3_1_5_*` | SDK 2.3 FSR 3.1.5 upscaler (bridge, bundle, catalog, descriptor, pipeline, reflection) | yes |
+| `src/ffx_vk_fsr3_3_1_6_framegen*.cpp` | FSR 3.1.6 optical flow and frame interpolation | yes |
+| `include/ffx_vk_framegeneration_presenter.h`, `src/ffx_vk_framegeneration_presenter.c` | Present-plan policy for generated-then-real frames; no swapchain ownership | yes |
+| `src/ffx_vk_fsr4_v07*.c`, `include/ffx_vk_fsr4_v07*.h` | FSR 4 v07 provider, asset helper, schedule (includes the 4.1.2 schedule) | yes, with game-supplied v07 assets only |
+| `include/ffx_vk_unified_sr.h`, `src/ffx_vk_unified_sr.c`, `include/ffx_vk_all_scalers.h`, `ffx_vk_scaler_catalog.h` | Upstream's own umbrella API and catalog; routes to the recovered paths | no (ADR 0001) |
+| `src/ffx_vk_xess_*`, `include/ffx_vk_xess_*`, `examples/xess-recovered/`, `shaders/xess/` | Recovered XeSS 2.0.2 pipeline and contract | never built (ruling 2026-11-01) |
+| `src/ffx_vk_dlss_contract.c`, `include/ffx_vk_dlss_contract.h`, `include/d4r_*_spv.h`, `shaders/dlss/` | Recovered DLSS / d4r pipeline | never built (ruling 2026-11-01) |
+| `tools/extract_fsr412_vk.py`, `tools/ffx_dxil/`, `tools/generate_dlss_shaders.py` | Model extraction and recovered-shader tools | never run (ruling 2026-11-01) |
+| `src/ffx_vk_*_contract.c` (ray regeneration, radiance cache, ML frame generation), `src/ffx_vk_temporal_lifecycle.c` | Input validators | no (a Won't) |
+| `upstream/ffx-1.1.4/`, `upstream/ffx-2.3.0/`, `generated/` | Vendored AMD FidelityFX sources (MIT per file) and checked-in SPIR-V tables | through the FSR targets |
+| `tests/`, `examples/`, `tools/` (others) | Upstream's tests, examples, generators | upstream's |
+| `README.md`, `INTEGRATION_GUIDE.md`, `UPSTREAM.md`, `NOTICE.md`, `PUBLISHING.md`, `LICENSE.txt`, `.github/workflows/ci.yml` | Upstream's docs, licence and CI | read only |
 
 ## Where our work is
 
-`git log upstream/main..HEAD`: four commits. The code changes are the first two (119 added lines in two files); the other two add our own docs files (`docs/code-map.md`, then the stage record, agent rules and change log).
+`git log upstream/main..main`. Our only edits to upstream-owned files are the FSR 4 profiling switches (D1):
 
 | Commit | Files | Change |
 |---|---|---|
-| `cc76692` wip: FSR 4 profiling switches | `src/ffx_vk_fsr4_v07.c` (+109), `upstream/ffx-1.1.4/sdk/src/backends/vk/ffx_vk.cpp` (+10) | Opt-in env switches `BB_FSR4_PROFILE` (GPU time per pass via timestamps) and `BB_FSR4_STATS` (pipeline executable statistics; the device must enable `pipelineExecutableInfo`) |
-| `0c076be` | merge | Merges the `exp/fsr4-profile-stats-1020` branch into `main` |
+| `cc76692` | `src/ffx_vk_fsr4_v07.c` (+109), `upstream/ffx-1.1.4/sdk/src/backends/vk/ffx_vk.cpp` (+10) | Opt-in env switches `BB_FSR4_PROFILE` (GPU time per pass via timestamps) and `BB_FSR4_STATS` (pipeline executable statistics; the device must enable `pipelineExecutableInfo`) |
 
-Everything else matches upstream. A branch `fix/skip-protected-memory-types` (upstream PR #1) is not present on this fork's remote; only `main` exists there (checked 2026-10-28). `main` is ahead of upstream, so a pure fast-forward of a mirror no longer applies.
+Everything else of ours is in our own files: `universal/`, `.github/workflows/fork-ci.yml`, `docs/`, `SPEC.md`, `ROADMAP.md`, `GLOSSARY.md`, `PIPELINE.md`, `AGENTS.fork.md`, `CHANGELOG.fork.md`, `CLAUDE.md`.
 
 ## Build and test
 
-Commands as `PUBLISHING.md` states them:
-
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel
-ctest --test-dir build --output-on-failure
+cmake -S universal -B build-uscale -DCMAKE_BUILD_TYPE=Release
+cmake --build build-uscale --config Release --parallel
+ctest --test-dir build-uscale -C Release --output-on-failure
 ```
 
-- Needs CMake 3.15+, a C11 and C++ compiler, and the Vulkan headers/loader (`find_package(Vulkan REQUIRED)`). Shader regeneration additionally needs `glslang-tools`.
-- Useful options: `FFX_VK_PORTABLE_BUILD_TESTS`, `_BUILD_PROBE`, `_BUILD_FSR3_HOST`, `_BUILD_FSR3_VK_BACKEND`, `_BUILD_FSR4_V07_VULKAN`, `_INSTALL` (all ON by default), `FFX_VK_PORTABLE_FSR4_V07_TEST_ASSET_DIR` (optional asset bundle for the layout test).
-- CI (`.github/workflows/ci.yml`, job `build-and-test`): on every push and pull request, Ubuntu 24.04, installs `cmake g++ libvulkan-dev glslang-tools`, then configure, build, ctest in Release.
+- Needs CMake 3.16+ and a C11 compiler; the Vulkan half also needs the Vulkan headers and loader. The lint is the build itself: `-Wall -Wextra -Wpedantic -Werror` (GCC, Clang) or `/W4 /WX` (MSVC).
+- A new test is a new file `universal/tests/<name>_test.c`; CMake finds it. Name it `uscale_vk_<name>_test.c` when it needs Vulkan.
+- Do not build the repo root with its defaults: it compiles the recovered targets. Upstream's `ci.yml` does; ours does not.
 
 ## Mac / PC / Linux
 
-- Linux is the covered platform: CI runs only on Ubuntu 24.04. The code is written for non-Windows hosts (opaque context storage is doubled on non-Windows platforms because of the `wchar_t` size difference).
-- The CMake file has MSVC branches (`/W4`) and `UNIX AND NOT APPLE` branches, so Windows and Linux are anticipated; there is no Windows CI job.
-- macOS is not targeted: Apple is excluded in some branches and there is no CI. A Mac session can read and edit files and may configure the project only if the Vulkan SDK is installed (R04: no check exists for Mac).
-- Tests that need a real GPU (backend smoke tests) depend on the runner's Vulkan driver; ordinary tests are validation and contract checks.
+| | Linux | Windows | Mac |
+|---|---|---|---|
+| Compiler | GCC, Clang | MSVC | Apple Clang |
+| Vulkan | distro loader; lavapipe in CI (2.06) | Vulkan SDK in CI (4.01) | MoltenVK through the loader (4.02) |
+| CI today | pure + Vulkan half | pure half | pure half |
+| Runtime libraries | `dlopen` | `LoadLibrary` | `dlopen` |
+| DLSS / XeSS | runtime if present | runtime if present | none: falls back to FSR 3 |
+| Device check | AMD handheld, RTX 3090 Ti desktop (7.01, 7.02) | RTX 3090 Ti desktop (7.02) | Mac mini (7.03) |
 
 ## Open-source pieces
 
 | Piece | Where it fits |
 |---|---|
-| AMD FidelityFX SDK 1.1.4 (MIT) | Vendored under `upstream/ffx-1.1.4`: FSR 3.1.4 host scheduler, upscaler, frame interpolation, optical flow |
-| AMD FSR SDK 2.3.0 (per-file MIT notices) | Algorithm reference and vendored files under `upstream/ffx-2.3.0` (FSR 3.1.5 upscaler, 3.1.6 frame generation); check each file's notice; signed DLLs must not be imported |
-| Vulkan headers and loader | Required dependency of every target |
-| glslang | Shader generation scripts and SPIR-V validation (`glslang-tools` in CI) |
-| Q2RTX | The reference integration that vendors the same tree and supplies a presenter reference |
+| FireBurn/UniversalScalers-Vulkan (MIT) | The whole upstream tree; we link its FSR targets |
+| AMD FidelityFX SDK 1.1.4 and FSR SDK 2.3.0 (MIT per file) | Vendored under `upstream/`; FSR 3 sources |
+| Vulkan headers and loader, MoltenVK (Apache-2.0) | Every Vulkan target; Mac |
+| Mesa lavapipe | Software Vulkan device for GPU tests in Linux CI |
+| Intel XeSS SDK, NVIDIA DLSS SDK | Runtimes on the player's machine; terms in `docs/licences.md` (5.01) |

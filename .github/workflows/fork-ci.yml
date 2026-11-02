@@ -1,0 +1,45 @@
+# Our CI for universal/ (the uscale C API) on Linux, Windows and macOS (SPEC.md M10).
+# Upstream's own workflow is ci.yml; this file is ours. Public repo: GitHub-hosted runners (R29).
+name: fork-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  uscale:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Vulkan headers and loader (Linux)
+        if: runner.os == 'Linux'
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          SUDO=$(command -v sudo || true)
+          $SUDO apt-get update
+          $SUDO apt-get install -y --no-install-recommends cmake gcc libvulkan-dev
+      - name: Configure
+        shell: bash
+        run: cmake -S universal -B build-uscale -DCMAKE_BUILD_TYPE=Release
+      - name: Build (warnings are errors)
+        shell: bash
+        run: cmake --build build-uscale --config Release --parallel
+      - name: Test
+        shell: bash
+        run: ctest --test-dir build-uscale -C Release --output-on-failure
+      - name: Recovered pipelines are not built (ruling 2026-11-01)
+        shell: bash
+        run: |
+          hits=$(find build-uscale -iname '*xess_recovered*' -o -iname '*dlss_contract*' -o -iname '*d4r_*' | head -n 5)
+          if [ -n "$hits" ]; then echo "Forbidden targets were built:"; echo "$hits"; exit 1; fi
+          echo "none built"
