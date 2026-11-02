@@ -2,6 +2,7 @@
 
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
+- 2026-11-02 Roadmap -> Dev Loop: 25 issues filed (#3-#27) from ROADMAP.md stages 2-7; the 4 Easy ones (#3-#6) carry a Qwen brief and locked tests, checked red on the stubs and green on a reference with GCC, Clang and MSVC. #1 stays open, blocked by #7.
 - 2026-11-02 Parked -> Spec -> Roadmap: spec approved (shared upscaler and frame-generation library for the -universal games; 1.0 = Uncharted-Universal through it on Linux, Windows and Mac; DLSS kept fully; 16 peers). Kind: mirror -> fork built our way. ADR 0001: vendor paths through vendor runtimes, recovered pipelines never built.
 - 2026-11-01 Synced to FireBurn/UniversalScalers-Vulkan 69fecd7 (fork main merged in, nothing dropped); model-extraction tools rule added to AGENTS.fork.md (owner ruling).
 - 2026-10-26 Normalized to pipeline v2 at Parked (reference mirror of FireBurn/FSR-Vulkan).

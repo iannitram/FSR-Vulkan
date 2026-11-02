@@ -32,56 +32,56 @@ Each stage's issues can run in parallel unless a `Blocked by` line says otherwis
 
 | Id | Issue | Size | Kind |
 |---|---|---|---|
-| 2.01 | Result and backend names | Easy | pure-fn |
-| 2.02 | Render size per quality preset | Easy | pure-fn |
-| 2.03 | Backend choice and fallback | Easy | pure-fn |
-| 2.04 | Profiling flags from the environment | Easy | pure-fn |
-| 2.05 | `USCALE_WITH_FFX`: link upstream's FSR targets, never the recovered ones | Medium | wiring |
-| 2.06 | Linux CI job on a software Vulkan device (lavapipe) | Medium | wiring |
+| 2.01 | #3 Result and backend names | Easy | pure-fn |
+| 2.02 | #4 Render size per quality preset | Easy | pure-fn |
+| 2.03 | #5 Backend choice and fallback | Easy | pure-fn |
+| 2.04 | #6 Profiling flags from the environment | Easy | pure-fn |
+| 2.05 | #7 `USCALE_WITH_FFX`: link upstream's FSR targets, never the recovered ones | Medium | wiring |
+| 2.06 | #8 Linux CI job on a software Vulkan device (lavapipe) | Medium | wiring |
 
 ### 3. FSR 3 path (Linux first, then Windows and Mac through stage 4)
 
 | Id | Issue | Size | Kind |
 |---|---|---|---|
-| 3.01 | `uscale_query_caps` from the physical device | Medium | data-shape |
-| 3.02 | Context lifecycle and the backend table, with fallback | Medium | state |
-| 3.03 | FSR 3 bridge: map `uscale_upscale_info` onto upstream's FSR 3 dispatch | Medium | data-shape |
-| 3.04 | FSR 3 upscale backend runs on lavapipe | Hard | wiring |
-| 3.05 | FSR 3 frame generation and presenter policy | Hard | state |
+| 3.01 | #9 `uscale_query_caps` from the physical device | Medium | data-shape |
+| 3.02 | #10 Context lifecycle and the backend table, with fallback | Medium | state |
+| 3.03 | #11 FSR 3 bridge: map `uscale_upscale_info` onto upstream's FSR 3 dispatch | Medium | data-shape |
+| 3.04 | #12 FSR 3 upscale backend runs on lavapipe | Hard | wiring |
+| 3.05 | #13 FSR 3 frame generation and presenter policy | Hard | state |
 
 ### 4. Platforms
 
 | Id | Issue | Size | Kind |
 |---|---|---|---|
-| 4.01 | Windows: the Vulkan half and the FSR targets build with MSVC in CI | Hard | wiring |
-| 4.02 | Mac: the Vulkan half and the FSR targets build on MoltenVK in CI | Hard | wiring |
+| 4.01 | #14 Windows: the Vulkan half and the FSR targets build with MSVC in CI | Hard | wiring |
+| 4.02 | #15 Mac: the Vulkan half and the FSR targets build on MoltenVK in CI | Hard | wiring |
 
 ### 5. Vendor paths (ADR 0001)
 
 | Id | Issue | Size | Kind |
 |---|---|---|---|
-| 5.01 | Licence check: DLSS, XeSS, FSR 4 assets -> `docs/licences.md` | Medium | docs |
-| 5.02 | Vendor runtime loader (`dlopen` / `LoadLibrary`) | Medium | wiring |
-| 5.03 | FSR 4 backend: upstream v07 provider with the game's asset folder | Hard | wiring |
-| 5.04 | XeSS: find Intel's runtime and report it in the caps | Medium | wiring |
-| 5.05 | XeSS backend | Hard | wiring |
-| 5.06 | DLSS: find NVIDIA's runtime and report it in the caps | Medium | wiring |
-| 5.07 | DLSS backend | Hard | wiring |
+| 5.01 | #16 Licence check: DLSS, XeSS, FSR 4 assets -> `docs/licences.md` | Medium | docs |
+| 5.02 | #17 Vendor runtime loader (`dlopen` / `LoadLibrary`) | Medium | wiring |
+| 5.03 | #18 FSR 4 backend: upstream v07 provider with the game's asset folder | Hard | wiring |
+| 5.04 | #19 XeSS: find Intel's runtime and report it in the caps | Medium | wiring |
+| 5.05 | #20 XeSS backend | Hard | wiring |
+| 5.06 | #21 DLSS: find NVIDIA's runtime and report it in the caps | Medium | wiring |
+| 5.07 | #22 DLSS backend | Hard | wiring |
 
 ### 6. Integration
 
 | Id | Issue | Size | Kind |
 |---|---|---|---|
-| 6.01 | Integration guide `docs/integration.md` + `universal/examples/minimal` | Medium | docs |
-| 6.02 | Install rules, `find_package(uscale)` and the no-vendor-files install check | Medium | wiring |
+| 6.01 | #23 Integration guide `docs/integration.md` + `universal/examples/minimal` | Medium | docs |
+| 6.02 | #24 Install rules, `find_package(uscale)` and the no-vendor-files install check | Medium | wiring |
 
 ### 7. Device checks (`needs-owner-device`)
 
 | Id | Issue | Size | Kind |
 |---|---|---|---|
-| 7.01 | AMD handheld, Linux: FSR 3, frame generation, FSR 4, profiling | Medium | wiring |
-| 7.02 | RTX 3090 Ti desktop, Windows and Linux: FSR 3, frame generation, DLSS, XeSS | Medium | wiring |
-| 7.03 | Mac mini, MoltenVK: FSR 3 and frame generation | Medium | wiring |
+| 7.01 | #25 AMD handheld, Linux: FSR 3, frame generation, FSR 4, profiling | Medium | wiring |
+| 7.02 | #26 RTX 3090 Ti desktop, Windows and Linux: FSR 3, frame generation, DLSS, XeSS | Medium | wiring |
+| 7.03 | #27 Mac mini, MoltenVK: FSR 3 and frame generation | Medium | wiring |
 
 ### 8. Design pass and 1.0
 

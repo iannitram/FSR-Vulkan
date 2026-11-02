@@ -1,4 +1,4 @@
-Stage: Roadmap
+Stage: Dev Loop
 Since: 2026-11-02
 Kind: fork (upstream: FireBurn/UniversalScalers-Vulkan), built our way: our shared upscaler and frame-generation library for the -universal games
 Spec: SPEC.md   Roadmap: ROADMAP.md   Code map: docs/code-map.md
