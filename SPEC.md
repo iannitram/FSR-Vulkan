@@ -8,6 +8,10 @@
 - "Uncharted-Universal (Recommended)": 1.0 is Uncharted-Universal upscaling and frame-generating through this library on Linux, Windows and Mac (Mac through MoltenVK). The integration inside Uncharted-Universal is that repo's job; this repo provides what it needs (a stable C API and an integration guide).
 - "Keep DLSS fully": DLSS is a full part of 1.0 alongside FSR 3, FSR 4 and XeSS.
 - "Approve all 16 (Recommended)": the prior-art list below.
+- Later the same day, "Make it optional (Recommended)" ("I think each will become custom over time. This doesn't need to be a rule."): a `-universal` game may plug into this library, and that is preferred, but no game must; a game may keep and customise its own FSR copy as long as FSR 3.1 works there. 1.0 stays Uncharted-Universal through this library.
+- Same day, DLSS: "Official runtimes only (Recommended)". DLSS, XeSS and FSR 4 run only through the vendor's own runtime already on the player's machine. No recovered or extracted code or assets go in our repo.
+
+The last two are my own rulings, so the spec stays approved.
 
 Standing ruling this spec keeps: the model-extraction rule of 2026-11-01 (`AGENTS.fork.md`): we never run upstream's extraction tools and never build or ship their output, the "recovered" XeSS and DLSS pipelines included. So in this spec FSR 4, XeSS and DLSS reach the GPU through each vendor's own runtime or assets, found or supplied on the player's machine, never through files we extracted or ship (`docs/adr/0001-vendor-paths.md`).
 
@@ -22,7 +26,7 @@ Our delta, what I want that upstream will not do or has not done:
 | # | Delta | Where |
 |---|---|---|
 | D1 | FSR 4 profiling switches `BB_FSR4_PROFILE` (GPU time per pass) and `BB_FSR4_STATS` (pipeline statistics), kept through every sync | send upstream (an offer needs my yes, R36) |
-| D2 | One stable, versioned C API (`universal/include/uscale.h`, `uscale_vulkan.h`) that every `-universal` game links, with the same calls on every backend and platform | keep on our fork |
+| D2 | One stable, versioned C API (`universal/include/uscale.h`, `uscale_vulkan.h`) that any `-universal` game can link (optional, preferred), with the same calls on every backend and platform | keep on our fork |
 | D3 | Backend choice with a written fallback: the API picks DLSS, FSR 4, XeSS or FSR 3 from the device and the runtimes it finds, and says why | keep on our fork |
 | D4 | DLSS through NVIDIA's own DLSS runtime and XeSS through Intel's own XeSS runtime, loaded at run time, never shipped by us; upstream's recovered pipelines are not built | keep on our fork |
 | D5 | FSR 4 through upstream's v07 provider with an asset set the game supplies (Uncharted-Universal's fetch, its issue #18), never the extracted 4.1.2 set | keep on our fork |
@@ -44,7 +48,7 @@ Each Must is something a person can do and see. Each one gets its own issue, and
 | M4 | WHEN FSR 3 is chosen, THE LIBRARY SHALL upscale through upstream's FSR 3 upscaler on Linux, Windows and Mac | upscaled frames, no Vulkan validation errors | CI: dispatch test on a software Vulkan device (lavapipe) on Linux; **needs-owner-device**: the AMD handheld (Linux), the RTX 3090 Ti desktop (Windows), the Mac mini (MoltenVK) |
 | M5 | WHEN frame generation is on, THE LIBRARY SHALL generate frames through upstream's FSR 3.1.6 frame generation and its presenter policy, with the game owning the swapchain | generated-then-real frames presented in order at 2x | CI: frame-generation dispatch test on lavapipe; **needs-owner-device**: the same three machines |
 | M6 | WHEN the game supplies an FSR 4 asset folder and the GPU has integer dot product and FP16, THE LIBRARY SHALL upscale through FSR 4 (upstream's v07 provider); with no assets or no support it SHALL fall back to FSR 3 | FSR 4 named as the active backend | CI: asset-check and fallback tests; **needs-owner-device**: the AMD handheld |
-| M7 | WHEN NVIDIA's DLSS runtime is present on an NVIDIA RTX GPU, THE LIBRARY SHALL upscale through DLSS; elsewhere it SHALL fall back with a reason | DLSS named as the active backend | CI: loader and fallback tests (no runtime present); **needs-owner-device**: the RTX 3090 Ti desktop, Windows and Linux |
+| M7 | WHEN NVIDIA's own DLSS runtime is already on the player's machine and the GPU is an NVIDIA RTX, THE LIBRARY SHALL upscale through that runtime only; elsewhere it SHALL fall back with a reason. No recovered or extracted DLSS code or assets go in our repo (my ruling, 2026-11-02: "Official runtimes only") | DLSS named as the active backend | CI: loader and fallback tests (no runtime present); **needs-owner-device**: the RTX 3090 Ti desktop, Windows and Linux |
 | M8 | WHEN Intel's XeSS runtime is present, THE LIBRARY SHALL upscale through XeSS; elsewhere it SHALL fall back with a reason | XeSS named as the active backend | CI: loader and fallback tests; **needs-owner-device**: the RTX 3090 Ti desktop (XeSS's DP4a path), Windows |
 | M9 | WHEN `BB_FSR4_PROFILE` or `BB_FSR4_STATS` is set, THE LIBRARY SHALL keep upstream's FSR 4 profiling switches working through every sync | per-pass GPU times or pipeline statistics printed | CI: `uscale_profile_env_test`; **needs-owner-device**: the AMD handheld |
 | M10 | WHEN the library builds, IT SHALL build and pass its tests on Linux, Windows and macOS in CI, without compiling upstream's recovered XeSS or DLSS targets | three green CI jobs | CI: `fork-ci.yml`, plus a check that `xess-recovered` and `dlss-contract` are not in the build |
@@ -67,7 +71,7 @@ Things 1.0 will not do, so nobody builds them by accident.
 
 ## Risks to check
 
-- **DLSS licence (open).** I chose to keep DLSS fully. Still to check: NVIDIA's DLSS SDK licence, which files a game may redistribute (the `nvngx_dlss` runtime), what notice it requires, and whether an MIT library may load it from the player's machine. Until that check is written into `docs/licences.md`, the DLSS backend loads only a runtime already on the player's machine and we ship nothing of NVIDIA's. This does not change my choice; it decides how DLSS reaches the player.
+- **DLSS licence (open).** I chose to keep DLSS fully. Still to check: NVIDIA's DLSS SDK licence, which files a game may redistribute (the `nvngx_dlss` runtime), what notice it requires, and whether an MIT library may load it from the player's machine. My ruling of 2026-11-02, "Official runtimes only (Recommended)", settles how DLSS reaches the player: the DLSS backend loads only NVIDIA's runtime already on the player's machine, and we ship nothing of NVIDIA's, whatever the licence check finds. The check still says what notice that needs.
 - **XeSS licence.** Intel's XeSS SDK is under its own licence (NOASSERTION on GitHub); the same check applies, and whether its Vulkan path runs on Linux.
 - **FSR 4 assets.** AMD's FSR 4 source and models carry no licence file; the game fetches them (Uncharted-Universal #18) and we ship none.
 - **Mac.** DLSS and XeSS have no Mac runtime, so on Mac 1.0 means FSR 3 upscaling and frame generation (and FSR 4 if MoltenVK exposes integer dot product). Uncharted-Universal's spec draws a Metal renderer on Apple (its ADR 0006); on Mac the game must reach this library through MoltenVK, a cross-repo point for that repo to settle.

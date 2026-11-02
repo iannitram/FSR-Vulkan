@@ -2,6 +2,7 @@
 
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
+- 2026-11-02 My rulings: using this library is optional for the -universal games (D2 softened); DLSS, XeSS and FSR 4 run only through the vendor's own runtime on the player's machine, nothing recovered or extracted in our repo (approval line, M7, the DLSS licence note; #16, #18, #20, #22).
 - 2026-11-02 Roadmap -> Dev Loop: 25 issues filed (#3-#27) from ROADMAP.md stages 2-7; the 4 Easy ones (#3-#6) carry a Qwen brief and locked tests, checked red on the stubs and green on a reference with GCC, Clang and MSVC. #1 stays open, blocked by #7.
 - 2026-11-02 Parked -> Spec -> Roadmap: spec approved (shared upscaler and frame-generation library for the -universal games; 1.0 = Uncharted-Universal through it on Linux, Windows and Mac; DLSS kept fully; 16 peers). Kind: mirror -> fork built our way. ADR 0001: vendor paths through vendor runtimes, recovered pipelines never built.
 - 2026-11-01 Synced to FireBurn/UniversalScalers-Vulkan 69fecd7 (fork main merged in, nothing dropped); model-extraction tools rule added to AGENTS.fork.md (owner ruling).
