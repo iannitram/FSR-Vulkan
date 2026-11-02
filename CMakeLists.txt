@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(ffx_vulkan_portable VERSION 0.1.0 LANGUAGES C CXX)
+project(UniversalScalers_Vulkan VERSION 1.0.0 LANGUAGES C CXX)
 
 option(FFX_VK_PORTABLE_BUILD_TESTS "Build the portable FidelityFX Vulkan contract tests" ON)
 option(FFX_VK_PORTABLE_BUILD_PROBE "Build the Vulkan device capability probe" ON)
@@ -205,6 +205,124 @@ else()
     target_compile_options(ffx_vulkan_radiancecache_contract PRIVATE
         -Wall -Wextra -Wpedantic)
 endif()
+
+# Provider-neutral validation for DLSS (including d4r for RDNA3/4) and
+# DLSS 5 Neural Rendering. It validates host inputs, GPU architecture,
+# and VRAM interop handles before dispatch.
+add_library(ffx_vulkan_dlss_contract STATIC
+    src/ffx_vk_dlss_contract.c)
+add_library(ffx-vulkan::dlss-contract ALIAS
+    ffx_vulkan_dlss_contract)
+set_property(TARGET ffx_vulkan_dlss_contract PROPERTY
+    EXPORT_NAME dlss-contract)
+target_compile_features(ffx_vulkan_dlss_contract PUBLIC c_std_11)
+target_include_directories(ffx_vulkan_dlss_contract PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+target_link_libraries(ffx_vulkan_dlss_contract
+    PUBLIC ffx-vulkan::portable)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(ffx_vulkan_dlss_contract PUBLIC m)
+endif()
+if(MSVC)
+    target_compile_options(ffx_vulkan_dlss_contract PRIVATE /W4)
+else()
+    target_compile_options(ffx_vulkan_dlss_contract PRIVATE
+        -Wall -Wextra -Wpedantic)
+endif()
+
+# Provider-neutral Vulkan contract for Intel XeSS 2 / 3 Super Resolution.
+# Models the 14-dispatch U-Net convolutional pipeline, 13 neural weight layers,
+# and DP4a cross-vendor execution path.
+add_library(ffx_vulkan_xess_contract STATIC
+    src/ffx_vk_xess_contract.c)
+add_library(ffx-vulkan::xess-contract ALIAS
+    ffx_vulkan_xess_contract)
+set_property(TARGET ffx_vulkan_xess_contract PROPERTY
+    EXPORT_NAME xess-contract)
+target_compile_features(ffx_vulkan_xess_contract PUBLIC c_std_11)
+target_include_directories(ffx_vulkan_xess_contract PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+target_link_libraries(ffx_vulkan_xess_contract
+    PUBLIC ffx-vulkan::portable)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(ffx_vulkan_xess_contract PUBLIC m)
+endif()
+if(MSVC)
+    target_compile_options(ffx_vulkan_xess_contract PRIVATE /W4)
+else()
+    target_compile_options(ffx_vulkan_xess_contract PRIVATE
+        -Wall -Wextra -Wpedantic)
+endif()
+
+add_library(ffx_vulkan_xess_recovered STATIC src/ffx_vk_xess_recovered.cpp)
+add_library(ffx-vulkan::xess-recovered ALIAS ffx_vulkan_xess_recovered)
+set_property(TARGET ffx_vulkan_xess_recovered PROPERTY EXPORT_NAME xess-recovered)
+target_compile_features(ffx_vulkan_xess_recovered PRIVATE cxx_std_17)
+target_include_directories(ffx_vulkan_xess_recovered PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+target_link_libraries(ffx_vulkan_xess_recovered PUBLIC Vulkan::Vulkan)
+if(MSVC)
+    target_compile_options(ffx_vulkan_xess_recovered PRIVATE /W4)
+else()
+    target_compile_options(ffx_vulkan_xess_recovered PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Unified Super Resolution umbrella API. Automatically queries GPU vendor and
+# feature tier, auto-selects optimal upscaler (DLSS/d4r, FSR4, XeSS, FSR3),
+# and provides a 1-line integration path for any Vulkan engine.
+add_library(ffx_vulkan_unified_sr STATIC
+    src/ffx_vk_unified_sr.c)
+add_library(ffx-vulkan::unified-sr ALIAS
+    ffx_vulkan_unified_sr)
+set_property(TARGET ffx_vulkan_unified_sr PROPERTY
+    EXPORT_NAME unified-sr)
+target_compile_features(ffx_vulkan_unified_sr PUBLIC c_std_11)
+target_include_directories(ffx_vulkan_unified_sr PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+target_link_libraries(ffx_vulkan_unified_sr
+    PUBLIC
+        ffx-vulkan::portable
+        ffx-vulkan::dlss-contract
+        ffx-vulkan::xess-contract)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(ffx_vulkan_unified_sr PUBLIC m)
+endif()
+if(MSVC)
+    target_compile_options(ffx_vulkan_unified_sr PRIVATE /W4)
+else()
+    target_compile_options(ffx_vulkan_unified_sr PRIVATE
+        -Wall -Wextra -Wpedantic)
+endif()
+
+# Provider-neutral Vulkan contract for AMD ML Frame Generation 4.0.1 (FSR 4 MLFG).
+# Models neural bidirectional motion estimation, multi-frame interpolation ratios
+# (2x, 3x, 4x), hardware execution tiers (INT8, FP8/WMMA), and presentation contracts.
+add_library(ffx_vulkan_mlframegen_contract STATIC
+    src/ffx_vk_mlframegen_contract.c)
+add_library(ffx-vulkan::mlframegen-contract ALIAS
+    ffx_vulkan_mlframegen_contract)
+set_property(TARGET ffx_vulkan_mlframegen_contract PROPERTY
+    EXPORT_NAME mlframegen-contract)
+target_compile_features(ffx_vulkan_mlframegen_contract PUBLIC c_std_11)
+target_include_directories(ffx_vulkan_mlframegen_contract PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+target_link_libraries(ffx_vulkan_mlframegen_contract
+    PUBLIC ffx-vulkan::portable)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(ffx_vulkan_mlframegen_contract PUBLIC m)
+endif()
+if(MSVC)
+    target_compile_options(ffx_vulkan_mlframegen_contract PRIVATE /W4)
+else()
+    target_compile_options(ffx_vulkan_mlframegen_contract PRIVATE
+        -Wall -Wextra -Wpedantic)
+endif()
+
 
 if(FFX_VK_PORTABLE_BUILD_FSR3_HOST)
     set(FFX_1_1_4_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/upstream/ffx-1.1.4/sdk")
@@ -562,6 +680,11 @@ target_link_libraries(ffx_vulkan_effects INTERFACE
     ffx-vulkan::portable
     ffx-vulkan::rayregeneration-contract
     ffx-vulkan::radiancecache-contract
+    ffx-vulkan::dlss-contract
+    ffx-vulkan::xess-contract
+    ffx-vulkan::xess-recovered
+    ffx-vulkan::mlframegen-contract
+    ffx-vulkan::unified-sr
     ffx-vulkan::fsr4-v07-assets
     ffx-vulkan::framegeneration-presenter-policy
     ffx-vulkan::temporal-lifecycle)
@@ -651,6 +774,11 @@ if(FFX_VK_PORTABLE_INSTALL)
         ffx_vulkan_portable
         ffx_vulkan_rayregeneration_contract
         ffx_vulkan_radiancecache_contract
+        ffx_vulkan_dlss_contract
+        ffx_vulkan_xess_contract
+        ffx_vulkan_xess_recovered
+        ffx_vulkan_mlframegen_contract
+        ffx_vulkan_unified_sr
         ffx_vulkan_fsr4_v07_assets
         ffx_vulkan_framegeneration_presenter_policy
         ffx_vulkan_temporal_lifecycle
@@ -695,10 +823,37 @@ if(FFX_VK_PORTABLE_INSTALL)
         ${CMAKE_CURRENT_BINARY_DIR}/ffx-vulkan-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/ffx-vulkan-config-version.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ffx-vulkan)
+
+    # Standalone release packaging (CPack)
+    set(CPACK_PACKAGE_NAME "ffx-vulkan")
+    set(CPACK_PACKAGE_VENDOR "FireBurn")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Portable Vulkan Super Resolution and Frame Generation Framework")
+    set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "ffx-vulkan")
+    set(CPACK_GENERATOR "TGZ;ZIP")
+    set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")
+    set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+    set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+    include(CPack)
 endif()
 
 if(FFX_VK_PORTABLE_BUILD_TESTS)
     enable_testing()
+    add_executable(ffx_vk_xess_recovered_c_test
+        examples/installed-full-stack/xess_c_contract.c)
+    target_compile_features(ffx_vk_xess_recovered_c_test PRIVATE c_std_11)
+    target_compile_definitions(ffx_vk_xess_recovered_c_test PRIVATE FFX_XESS_C_CONTRACT_STANDALONE=1)
+    target_link_libraries(ffx_vk_xess_recovered_c_test PRIVATE ffx-vulkan::xess-recovered)
+    set_property(TARGET ffx_vk_xess_recovered_c_test PROPERTY LINKER_LANGUAGE CXX)
+    add_test(NAME ffx_vk_xess_recovered_c COMMAND ffx_vk_xess_recovered_c_test)
+    add_executable(ffx_vk_xess_recovered_blob_test tests/xess_recovered_blob_test.c)
+    target_compile_features(ffx_vk_xess_recovered_blob_test PRIVATE c_std_11)
+    target_link_libraries(ffx_vk_xess_recovered_blob_test PRIVATE ffx-vulkan::xess-recovered)
+    set_property(TARGET ffx_vk_xess_recovered_blob_test PROPERTY LINKER_LANGUAGE CXX)
+    add_test(NAME ffx_vk_xess_recovered_blob COMMAND ffx_vk_xess_recovered_blob_test)
+    add_test(NAME ffx_vk_xess_conversion_source
+        COMMAND "${CMAKE_COMMAND}" "-DFFX_VK_MODULE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/xess_conversion_source.cmake")
 
     # An installed package must be consumable without the source tree. Keep
     # this top-level-only: when Q2RTX vendors the project its own install tree
@@ -733,6 +888,58 @@ if(FFX_VK_PORTABLE_BUILD_TESTS)
         ffx-vulkan::radiancecache-contract)
     add_test(NAME ffx_vk_radiancecache_contract
         COMMAND ffx_vk_radiancecache_contract_test)
+
+    add_executable(ffx_vk_dlss_contract_test
+        tests/dlss_contract_test.c)
+    target_link_libraries(ffx_vk_dlss_contract_test PRIVATE
+        ffx-vulkan::dlss-contract)
+    add_test(NAME ffx_vk_dlss_contract
+        COMMAND ffx_vk_dlss_contract_test)
+
+    add_executable(ffx_vk_xess_contract_test
+        tests/xess_contract_test.c)
+    target_link_libraries(ffx_vk_xess_contract_test PRIVATE
+        ffx-vulkan::xess-contract)
+    add_test(NAME ffx_vk_xess_contract
+        COMMAND ffx_vk_xess_contract_test)
+
+    add_executable(ffx_vk_unified_sr_test
+        tests/unified_sr_test.c)
+    target_link_libraries(ffx_vk_unified_sr_test PRIVATE
+        ffx-vulkan::unified-sr)
+    add_test(NAME ffx_vk_unified_sr
+        COMMAND ffx_vk_unified_sr_test)
+
+    # The catalog is also usable by a host UI without Vulkan or the renderer.
+    add_executable(ffx_vk_scaler_catalog_test tests/scaler_catalog_test.c)
+    target_include_directories(ffx_vk_scaler_catalog_test PRIVATE include)
+    target_compile_features(ffx_vk_scaler_catalog_test PRIVATE c_std_11)
+    add_test(NAME ffx_vk_scaler_catalog COMMAND ffx_vk_scaler_catalog_test)
+
+    add_executable(ffx_vk_all_scalers_test
+        tests/all_scalers_test.c)
+    target_link_libraries(ffx_vk_all_scalers_test PRIVATE
+        ffx-vulkan::unified-sr
+        ffx-vulkan::fsr4-v07-assets
+        ffx-vulkan::framegeneration-presenter-policy
+        ffx-vulkan::rayregeneration-contract)
+    add_test(NAME ffx_vk_all_scalers
+        COMMAND ffx_vk_all_scalers_test)
+
+    add_executable(ffx_vk_unified_sr_sample
+        examples/unified_sr_sample/unified_sr_minimal_sample.c)
+    target_compile_features(ffx_vk_unified_sr_sample PRIVATE c_std_11)
+    target_link_libraries(ffx_vk_unified_sr_sample PRIVATE
+        ffx-vulkan::unified-sr)
+    add_test(NAME ffx_vk_unified_sr_sample
+        COMMAND ffx_vk_unified_sr_sample)
+
+    add_executable(ffx_vk_mlframegen_contract_test
+        tests/mlframegen_contract_test.c)
+    target_link_libraries(ffx_vk_mlframegen_contract_test PRIVATE
+        ffx-vulkan::mlframegen-contract)
+    add_test(NAME ffx_vk_mlframegen_contract
+        COMMAND ffx_vk_mlframegen_contract_test)
 
     add_executable(ffx_vk_temporal_lifecycle_test
         tests/temporal_lifecycle_test.c)

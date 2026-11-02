@@ -21,3 +21,14 @@ Reference mirror of FireBurn/FSR-Vulkan, a portable Vulkan implementation of AMD
 - Licensing: vendored AMD source is MIT per file; do not import or derive from signed FSR binaries (see `UPSTREAM.md`).
 - Do not build or install anything on a small machine.
 
+## Model-extraction tools (owner ruling, 2026-11-01)
+
+We mirror upstream as it is, but we never run the model-extraction tools and we never ship their output.
+
+- Never run `tools/extract_fsr412_vk.py`.
+- Never run any other tool that extracts models or weights from a vendor's binaries or drivers.
+- Never build, package, publish or commit anything produced by those tools. That includes the "recovered" XeSS and DLSS pipelines (for example `examples/xess-recovered/`) and any model data derived from them.
+- Keeping the upstream files in the mirror is fine. Reading them is fine. Running them or releasing their output is not.
+- If a job seems to need one of these tools, stop and ask the owner. Do not work around this rule.
+
+Tracked in iannitram/FSR-Vulkan issue #1.
