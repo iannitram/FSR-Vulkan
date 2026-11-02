@@ -10,8 +10,9 @@
 - "Approve all 16 (Recommended)": the prior-art list below.
 - Later the same day, "Make it optional (Recommended)" ("I think each will become custom over time. This doesn't need to be a rule."): a `-universal` game may plug into this library, and that is preferred, but no game must; a game may keep and customise its own FSR copy as long as FSR 3.1 works there. 1.0 stays Uncharted-Universal through this library.
 - Same day, DLSS: "Official runtimes only (Recommended)". DLSS, XeSS and FSR 4 run only through the vendor's own runtime already on the player's machine. No recovered or extracted code or assets go in our repo.
+- Same day, FSR 4 assets: "Yes, that's fine (Recommended)". FSR 4 uses AMD's official files, which come from the game's folder or AMD's download, never from our repo; D5 and M6 stand.
 
-The last two are my own rulings, so the spec stays approved.
+The last three are my own rulings, so the spec stays approved.
 
 Standing ruling this spec keeps: the model-extraction rule of 2026-11-01 (`AGENTS.fork.md`): we never run upstream's extraction tools and never build or ship their output, the "recovered" XeSS and DLSS pipelines included. So in this spec FSR 4, XeSS and DLSS reach the GPU through each vendor's own runtime or assets, found or supplied on the player's machine, never through files we extracted or ship (`docs/adr/0001-vendor-paths.md`).
 
