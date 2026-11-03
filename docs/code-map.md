@@ -17,7 +17,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/include/uscale_vulkan.h` | Vulkan API: `uscale_image`, `uscale_context_create_info`, `uscale_upscale_info`, `uscale_framegen_info`; `uscale_query_caps`, `uscale_context_create`, `uscale_context_backend`, `uscale_record_upscale`, `uscale_record_framegen`, `uscale_retire_frame`, `uscale_context_destroy` | present | 1 |
 | `universal/src/uscale_version.c` | `uscale_version` | present | 1 |
 | `universal/src/uscale_names.c` | `uscale_result_name`, `uscale_backend_name` | present | 2.01 |
-| `universal/src/uscale_render_extent.c` | `uscale_render_extent` | stub | 2.02 |
+| `universal/src/uscale_render_extent.c` | `uscale_render_extent` | present | 2.02 |
 | `universal/src/uscale_select.c` | `uscale_select_backend` | present | 2.03 |
 | `universal/src/uscale_profile.c` | `uscale_profile_flags_from_env` | stub | 2.04 |
 | `universal/src/uscale_caps.c` | `uscale_query_caps`: vendor, integer dot product, FP16, MoltenVK, FSR 4 assets, vendor runtimes | stub | 3.01, 5.04, 5.06 |
