@@ -16,7 +16,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/include/uscale.h` | Pure API: version macros, `uscale_result`, `uscale_backend`, `uscale_quality`, `uscale_extent`, `uscale_device_caps`, profiling flag bits; `uscale_version`, `uscale_result_name`, `uscale_backend_name`, `uscale_render_extent`, `uscale_select_backend`, `uscale_profile_flags_from_env` | present | 1 |
 | `universal/include/uscale_vulkan.h` | Vulkan API: `uscale_image`, `uscale_context_create_info`, `uscale_upscale_info`, `uscale_framegen_info`; `uscale_query_caps`, `uscale_context_create`, `uscale_context_backend`, `uscale_record_upscale`, `uscale_record_framegen`, `uscale_retire_frame`, `uscale_context_destroy` | present | 1 |
 | `universal/src/uscale_version.c` | `uscale_version` | present | 1 |
-| `universal/src/uscale_names.c` | `uscale_result_name`, `uscale_backend_name` | stub | 2.01 |
+| `universal/src/uscale_names.c` | `uscale_result_name`, `uscale_backend_name` | present | 2.01 |
 | `universal/src/uscale_render_extent.c` | `uscale_render_extent` | stub | 2.02 |
 | `universal/src/uscale_select.c` | `uscale_select_backend` | stub | 2.03 |
 | `universal/src/uscale_profile.c` | `uscale_profile_flags_from_env` | stub | 2.04 |
