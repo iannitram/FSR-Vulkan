@@ -19,7 +19,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/src/uscale_names.c` | `uscale_result_name`, `uscale_backend_name` | present | 2.01 |
 | `universal/src/uscale_render_extent.c` | `uscale_render_extent` | present | 2.02 |
 | `universal/src/uscale_select.c` | `uscale_select_backend` | present | 2.03 |
-| `universal/src/uscale_profile.c` | `uscale_profile_flags_from_env` | stub | 2.04 |
+| `universal/src/uscale_profile.c` | `uscale_profile_flags_from_env` | present | 2.04 |
 | `universal/src/uscale_caps.c` | `uscale_query_caps`: vendor, integer dot product, FP16, MoltenVK, FSR 4 assets, vendor runtimes | stub | 3.01, 5.04, 5.06 |
 | `universal/src/uscale_context.c` | Context lifecycle; picks the backend with `uscale_select_backend`, falls back to FSR 3 if a backend's create fails; routes record calls | stub | 3.02 |
 | `universal/src/backend.h` | Internal backend table `uscale_backend_ops` (create, record_upscale, destroy) and the frame-generation calls | present | 1 |
