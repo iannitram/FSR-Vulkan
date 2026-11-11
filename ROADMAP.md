@@ -1,5 +1,22 @@
 # Roadmap to 1.0
 
+Updated: 2026-11-11
+
+features:
+- api: Stable, versioned C API in two headers, the same calls on every backend (M1, M2)
+- backend-choice: Backend choice with fallback to FSR 3 and a reason (M3)
+- fsr3-upscale: FSR 3 upscaling through upstream's FSR 3.1.x (M4)
+- fsr3-framegen: FSR 3 frame generation and the presenter policy (M5)
+- fsr4: FSR 4 through upstream's v07 provider with the game's assets (M6)
+- dlss: DLSS through NVIDIA's runtime on the player's machine (M7)
+- xess: XeSS through Intel's runtime on the player's machine (M8)
+- profiling: FSR 4 profiling switches BB_FSR4_PROFILE and BB_FSR4_STATS (M9)
+- ci: Build and CI on Linux, Windows and Mac, recovered pipelines never built (M10)
+- integration: Integration guide, example consumer and game-core adapters (M11)
+- packaging: Install package with no vendor files, and the licence notes (M12)
+- device-checks: Checks on my real machines (stage 7)
+- upstream-sync: Daily sync with upstream, our files kept beside its files
+
 **1.0** (`SPEC.md`): Uncharted-Universal upscales and frame-generates through this library's C API on Linux, Windows and Mac (MoltenVK), with FSR 3, FSR 4, XeSS and DLSS each working where the hardware can run it and FSR 3 everywhere else.
 
 Our work is the delta in `SPEC.md` (D1-D8); upstream's plan is its `UPSTREAM.md`. The code map is `docs/code-map.md`; how FSR 4, XeSS and DLSS reach the GPU is `docs/adr/0001-vendor-paths.md`. Issue numbers are in the stage tables; an issue's `Blocked by` line gives the order.
