@@ -32,6 +32,15 @@ jobs:
           SUDO=$(command -v sudo || true)
           $SUDO apt-get update
           $SUDO apt-get install -y --no-install-recommends cmake gcc g++ libvulkan-dev
+      - name: Install Mesa lavapipe (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          SUDO=$(command -v sudo || true)
+          $SUDO apt-get install -y --no-install-recommends mesa-vulkan-drivers
+          lvp_icd=$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)
+          test -n "$lvp_icd"
+          echo "VK_DRIVER_FILES=$lvp_icd" >> "$GITHUB_ENV"
+          echo "USCALE_REQUIRE_VK_DEVICE=1" >> "$GITHUB_ENV"
       - name: Configure
         shell: bash
         run: cmake -S universal -B build-uscale -DCMAKE_BUILD_TYPE=Release -DUSCALE_WITH_FFX=${{ matrix.ffx }}

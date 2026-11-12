@@ -2,6 +2,7 @@
 
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
+- 2026-11-12 (#8) Require a real Vulkan device on Mesa lavapipe in Linux CI; add a device smoke test with CTest skip support elsewhere.
 - 2026-11-12 (#17) Load vendor runtimes by ordered name list on Windows, Linux and macOS, report missing runtimes, resolve symbols and close handles; test with a build-made shared library on every CI platform.
 - 2026-11-12 (#7) Wire USCALE_WITH_FFX to only upstream's FSR targets through EXCLUDE_FROM_ALL, share the root setup with the frame-generation regression, and build/check it in Linux CI.
 - 2026-11-12 (#28) Tag and retire FSR 3.1.6 frame-generation bridge allocations and reject frame id 0, from Uncharted-Universal@7cec4936 and MIT peers mark3317/UniversalScalers-Vulkan@a0508e1f, vladtepes22/FSR-Vulkan@ad11f682; add a GPU allocation lifetime regression.
