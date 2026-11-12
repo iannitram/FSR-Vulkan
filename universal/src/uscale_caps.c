@@ -10,6 +10,7 @@
 #include <windows.h>
 #else
 #include <dirent.h>
+#include <unistd.h>
 #endif
 
 #include "uscale_vulkan.h"
@@ -22,8 +23,76 @@
 /* Internal seam used by the runtime-free test. A NULL directory searches the
  * process's normal library locations; a non-NULL directory restricts the scan. */
 uint32_t uscale_dlss_runtime_in_dir(const char *directory);
+#if !defined(_WIN32)
+void uscale_dlss_path_list(char *list, size_t cap, const char *exe_dir, const char *ld_path);
+uint32_t uscale_dlss_scan_path_list(const char *list);
+#endif
 uint32_t uscale_dlss_runtime_available(uint32_t vendor_id, uint32_t is_moltenvk,
                                        const char *directory);
+
+#if !defined(_WIN32)
+/* Linux search order: the folder beside the executable, each LD_LIBRARY_PATH entry, then the
+ * standard library folders. Empty entries are dropped (the loader reads them as the working
+ * directory, which a caps query should not scan). A piece that does not fit is skipped. */
+static void path_list_add(char *list, size_t cap, const char *piece)
+{
+    size_t len = strlen(list), add = piece != NULL ? strlen(piece) : 0;
+    if (add == 0 || len + (len > 0) + add >= cap) return;
+    if (len > 0) list[len++] = ':';
+    memcpy(list + len, piece, add + 1);
+}
+
+void uscale_dlss_path_list(char *list, size_t cap, const char *exe_dir, const char *ld_path)
+{
+    if (cap == 0) return;
+    list[0] = '\0';
+    path_list_add(list, cap, exe_dir);
+    path_list_add(list, cap, ld_path);
+    path_list_add(list, cap, "/usr/lib:/usr/lib64:/usr/lib/x86_64-linux-gnu:"
+        "/usr/lib/aarch64-linux-gnu:/lib:/lib64:/lib/x86_64-linux-gnu:"
+        "/lib/aarch64-linux-gnu:/usr/local/lib");
+}
+
+static uint32_t dlss_scan_dir(const char *dirname)
+{
+    DIR *dir = opendir(dirname);
+    struct dirent *entry;
+    if (dir == NULL) return 0;
+    while ((entry = readdir(dir)) != NULL) {
+        char path[4096];
+        const char prefix[] = "libnvidia-ngx-dlss.so.";
+        const char *const names[] = { path };
+        uscale_runtime *runtime = NULL;
+        int n;
+        if (strncmp(entry->d_name, prefix, sizeof(prefix) - 1) != 0 ||
+            entry->d_name[sizeof(prefix) - 1] == '\0') continue;
+        n = snprintf(path, sizeof(path), "%s/%s", dirname, entry->d_name);
+        if (n <= 0 || (size_t)n >= sizeof(path)) continue;
+        if (uscale_runtime_open(names, 1, &runtime) == USCALE_OK) {
+            uscale_runtime_close(runtime);
+            closedir(dir);
+            return 1;
+        }
+    }
+    closedir(dir);
+    return 0;
+}
+
+uint32_t uscale_dlss_scan_path_list(const char *list)
+{
+    while (*list != '\0') {
+        size_t len = strcspn(list, ":");
+        char dirname[4096];
+        if (len > 0 && len < sizeof(dirname)) {
+            memcpy(dirname, list, len);
+            dirname[len] = '\0';
+            if (dlss_scan_dir(dirname)) return 1;
+        }
+        list += len + (list[len] == ':');
+    }
+    return 0;
+}
+#endif
 
 uint32_t uscale_dlss_runtime_in_dir(const char *directory)
 {
@@ -41,38 +110,20 @@ uint32_t uscale_dlss_runtime_in_dir(const char *directory)
     uscale_runtime_close(runtime);
     return 1;
 #else
-    static const char *const defaults[] = { ".", "/usr/lib", "/usr/lib64",
-        "/usr/lib/x86_64-linux-gnu", "/usr/lib/aarch64-linux-gnu",
-        "/lib", "/lib64", "/lib/x86_64-linux-gnu",
-        "/lib/aarch64-linux-gnu", "/usr/local/lib" };
-    const char *const *dirs = defaults;
-    size_t dir_count = sizeof(defaults) / sizeof(defaults[0]);
-    size_t i;
-    if (directory != NULL) { dirs = &directory; dir_count = 1; }
-    for (i = 0; i < dir_count; ++i) {
-        DIR *dir = opendir(dirs[i]);
-        struct dirent *entry;
-        if (dir == NULL) continue;
-        while ((entry = readdir(dir)) != NULL) {
-            char path[4096];
-            int n;
-            size_t len = strlen(entry->d_name);
-            const char prefix[] = "libnvidia-ngx-dlss.so.";
-            const char *const names[] = { path };
-            uscale_runtime *runtime = NULL;
-            if (strncmp(entry->d_name, prefix, sizeof(prefix) - 1) != 0 ||
-                len == sizeof(prefix) - 1) continue;
-            n = snprintf(path, sizeof(path), "%s/%s", dirs[i], entry->d_name);
-            if (n <= 0 || (size_t)n >= sizeof(path)) continue;
-            if (uscale_runtime_open(names, 1, &runtime) == USCALE_OK) {
-                uscale_runtime_close(runtime);
-                closedir(dir);
-                return 1;
-            }
-        }
-        closedir(dir);
+    char list[8192];
+    char *exe_dir = NULL;
+#if defined(__linux__)
+    char exe[4096];
+    ssize_t got = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
+    if (got > 0) {
+        exe[got] = '\0';
+        exe_dir = strrchr(exe, '/');
+        if (exe_dir != NULL) { *exe_dir = '\0'; exe_dir = exe; }
     }
-    return 0;
+#endif
+    if (directory != NULL) return uscale_dlss_scan_path_list(directory);
+    uscale_dlss_path_list(list, sizeof(list), exe_dir, getenv("LD_LIBRARY_PATH"));
+    return uscale_dlss_scan_path_list(list);
 #endif
 }
 
