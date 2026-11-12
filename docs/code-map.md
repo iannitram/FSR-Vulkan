@@ -95,6 +95,7 @@ flowchart TD
 | `cc76692` | `src/ffx_vk_fsr4_v07.c` (+109), `upstream/ffx-1.1.4/sdk/src/backends/vk/ffx_vk.cpp` (+10) | Opt-in env switches `BB_FSR4_PROFILE` (GPU time per pass via timestamps) and `BB_FSR4_STATS` (pipeline executable statistics; the device must enable `pipelineExecutableInfo`) |
 | (this PR, #28) | `src/ffx_vk_fsr3_3_1_6_framegen.cpp` | Begin and retire bridge allocations for each generated frame; refuse reserved frame id 0; from Uncharted-Universal@7cec4936 and MIT peers mark3317/UniversalScalers-Vulkan@a0508e1f, vladtepes22/FSR-Vulkan@ad11f682 |
 | (this PR) | `upstream/ffx-1.1.4/sdk/src/backends/vk/ffx_vk.cpp` (+16 -2) | `findMemoryTypeIndex`: a device-local-only request falls back to a host-visible device-local type when no other type matches (lavapipe, MoltenVK, unified-memory devices); from the sibling fork ijdf/UniversalScalers-Vulkan@0d10361 (MIT) |
+| (this PR, #50) | `upstream/ffx-1.1.4/sdk/src/backends/vk/ffx_vk.cpp` (+9 -2), `tests/fsr3_vk_buffer_usage_test.cpp` | `ffxGetVKBufferUsageFlagsFromResourceUsage`: read-only buffers get `STORAGE_BUFFER` and transfer bits, UAVs get transfer bits; from AMD FidelityFX SDK v2.4.0 commit 7539ae8b6568ad29ed78a753404351daf3b5cca7, `Kits/FidelityFX/backend/vk/ffx_vk.cpp` L414-431, MIT (file header and `docs/license.md` L442) |
 
 Everything else of ours is in our own files: `universal/`, `.github/workflows/fork-ci.yml`, `docs/`, `SPEC.md`, `ROADMAP.md`, `GLOSSARY.md`, `PIPELINE.md`, `AGENTS.fork.md`, `CHANGELOG.fork.md`, `CLAUDE.md`.
 
