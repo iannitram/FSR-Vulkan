@@ -77,7 +77,7 @@ Each stage's issues can run in parallel unless a `Blocked by` line says otherwis
 
 | Id | Issue | Size | Kind |
 |---|---|---|---|
-| 5.01 | #16 Licence check: DLSS, XeSS, FSR 4 assets -> `docs/licences.md` | Medium | docs |
+| 5.01 | #16 Licence check: DLSS, XeSS, FSR 4 assets -> `docs/licences.md` (done, 2026-11-12) | Medium | docs |
 | 5.02 | #17 Vendor runtime loader (`dlopen` / `LoadLibrary`) | Medium | wiring |
 | 5.03 | #18 FSR 4 backend: upstream v07 provider with the game's asset folder | Hard | wiring |
 | 5.04 | #19 XeSS: find Intel's runtime and report it in the caps | Medium | wiring |
