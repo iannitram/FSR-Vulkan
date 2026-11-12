@@ -72,6 +72,8 @@ uscale_result uscale_query_caps(VkPhysicalDevice physical_device,
                                 uscale_device_caps *out_caps)
 {
     PFN_vkGetPhysicalDeviceFeatures2 get_features2;
+    PFN_vkGetPhysicalDeviceProperties get_props;
+    PFN_vkEnumerateDeviceExtensionProperties enum_exts;
     VkPhysicalDeviceProperties props;
     VkExtensionProperties *exts;
     uint32_t ext_count = 0;
@@ -90,16 +92,21 @@ uscale_result uscale_query_caps(VkPhysicalDevice physical_device,
     if (get_features2 == NULL)
         get_features2 = (PFN_vkGetPhysicalDeviceFeatures2)
             get_instance_proc_addr(instance, "vkGetPhysicalDeviceFeatures2KHR");
-    if (get_features2 == NULL)
+    /* Properties and extensions load through get_instance_proc_addr too. */
+    get_props = (PFN_vkGetPhysicalDeviceProperties)
+        get_instance_proc_addr(instance, "vkGetPhysicalDeviceProperties");
+    enum_exts = (PFN_vkEnumerateDeviceExtensionProperties)
+        get_instance_proc_addr(instance, "vkEnumerateDeviceExtensionProperties");
+    if (get_features2 == NULL || get_props == NULL || enum_exts == NULL)
         return USCALE_ERROR_UNSUPPORTED;
 
-    vkGetPhysicalDeviceProperties(physical_device, &props);
-    if (vkEnumerateDeviceExtensionProperties(physical_device, NULL, &ext_count, NULL) != VK_SUCCESS)
+    get_props(physical_device, &props);
+    if (enum_exts(physical_device, NULL, &ext_count, NULL) != VK_SUCCESS)
         return USCALE_ERROR_VULKAN;
     exts = calloc(ext_count > 0 ? ext_count : 1, sizeof(*exts));
     if (exts == NULL)
         return USCALE_ERROR_OUT_OF_MEMORY;
-    if (vkEnumerateDeviceExtensionProperties(physical_device, NULL, &ext_count, exts) != VK_SUCCESS) {
+    if (enum_exts(physical_device, NULL, &ext_count, exts) != VK_SUCCESS) {
         free(exts);
         return USCALE_ERROR_VULKAN;
     }
@@ -113,8 +120,13 @@ uscale_result uscale_query_caps(VkPhysicalDevice physical_device,
     dot.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_FEATURES;
     f16.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
     features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    features.pNext = &dot;
-    dot.pNext = &f16;
+    /* Chain a struct only when the device supports it; the spec forbids the rest. */
+    if (f16_ok) {
+        f16.pNext = features.pNext, features.pNext = &f16;
+    }
+    if (dot_ok) {
+        dot.pNext = features.pNext, features.pNext = &dot;
+    }
     get_features2(physical_device, &features);
 
     memset(&caps, 0, sizeof(caps));
