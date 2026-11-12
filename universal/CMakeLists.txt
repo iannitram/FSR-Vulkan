@@ -126,8 +126,8 @@ if(USCALE_BUILD_TESTS)
         else()
             target_link_libraries(${_test_name} PRIVATE uscale_core)
         endif()
-        if(_test_name STREQUAL "uscale_vk_fsr3_dispatch_test")
-            # Header-only upstream contract: no FFX build or GPU needed.
+        if(_test_name STREQUAL "uscale_vk_fsr3_dispatch_test" OR _test_name STREQUAL "uscale_vk_context_test")
+            # Internal headers (backend.h, backend_fsr3.h): no FFX build or GPU needed.
             target_include_directories(${_test_name} PRIVATE
                 ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/../include)
         endif()
