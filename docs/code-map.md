@@ -31,12 +31,13 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/src/backend_dlss.c` | DLSS through NVIDIA's runtime (NGX Vulkan) | stub | 5.07 |
 | `universal/tests/uscale_test.h` | Test harness: `CHECK`, `CHECK_INT`, `CHECK_STR`, `USCALE_TEST_END` | present | 1 |
 | `universal/tests/uscale_*_test.c` | Pure tests, run on every platform | present (version) | 2.x |
-| `universal/tests/uscale_vk_*_test.c` | Tests that need the Vulkan half (built only with `USCALE_WITH_VULKAN`) | present (link) | 3.x, 5.x |
+| `universal/tests/uscale_vk_*_test.c` | Tests that need the Vulkan half (built only with `USCALE_WITH_VULKAN`) | present (link, device) | 2.06, 3.x, 5.x |
+| `universal/tests/uscale_vk_device_test.c` | Creates an instance, device and queue; CTest skips with code 77 when no device is available, unless `USCALE_REQUIRE_VK_DEVICE=1` | present | 2.06 (#8) |
 | `universal/tests/uscale_vk_framegen_retire_test.cpp` | Opt-in FSR 3.1.6 GPU regression: 1,003 generated frames, bounded live memory and descriptor pools, reserved frame id 0 refused; enable `USCALE_TEST_FSR3_FRAMEGEN` ([run and measurements](framegen-retire.md)) | present | #28 |
 | `universal/examples/minimal/` | The example consumer from the integration guide | planned | 6.01 |
 | `docs/integration.md` | How a `-universal` game adds and calls `uscale` | planned | 6.01 |
 | `docs/licences.md` | What each vendor path lets us ship | stub | 5.01 |
-| `.github/workflows/fork-ci.yml` | Our CI: `universal/` on Ubuntu, Windows and macOS, plus `USCALE_WITH_FFX=ON` on Ubuntu; checks no recovered pipeline file was built | present | 1, 2.05, 2.06, 4.01, 4.02 |
+| `.github/workflows/fork-ci.yml` | Our CI: `universal/` on Ubuntu, Windows and macOS, plus `USCALE_WITH_FFX=ON` on Ubuntu; Linux installs Mesa and pins lavapipe, requires device tests to run; checks no recovered pipeline file was built | present | 1, 2.05, 2.06, 4.01, 4.02 |
 
 ### How it fits together
 
@@ -111,8 +112,8 @@ ctest --test-dir build-uscale -C Release --output-on-failure
 | | Linux | Windows | Mac |
 |---|---|---|---|
 | Compiler | GCC, Clang | MSVC | Apple Clang |
-| Vulkan | distro loader; lavapipe in CI (2.06) | Vulkan SDK in CI (4.01) | MoltenVK through the loader (4.02) |
-| CI today | pure + Vulkan half + FFX | pure half | pure half |
+| Vulkan | distro loader; Mesa lavapipe pinned via `VK_DRIVER_FILES` in CI (2.06) | Vulkan SDK in CI (4.01) | MoltenVK through the loader (4.02) |
+| CI today | pure + Vulkan half + FFX; device test required on lavapipe | pure half | pure half |
 | Runtime libraries | `dlopen` | `LoadLibrary` | `dlopen` |
 | DLSS / XeSS | runtime if present | runtime if present | none: falls back to FSR 3 |
 | Device check | AMD handheld, RTX 3090 Ti desktop (7.01, 7.02) | RTX 3090 Ti desktop (7.02) | Mac mini (7.03) |
