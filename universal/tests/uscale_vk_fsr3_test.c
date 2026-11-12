@@ -211,7 +211,8 @@ int main(void)
         return 1;
     }
     app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    app.apiVersion = VK_API_VERSION_1_1;
+    /* FSR 3 shaders are SPIR-V 1.5 (upstream builds them for vulkan1.2). */
+    app.apiVersion = VK_API_VERSION_1_2;
     ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     ici.pApplicationInfo = &app;
     if (use_validation) {
@@ -269,6 +270,10 @@ int main(void)
     free(devices);
     vkGetPhysicalDeviceProperties(phys, &props);
     printf("Device: %s (type %d)\n", props.deviceName, (int)props.deviceType);
+    if (props.apiVersion < VK_API_VERSION_1_2) {
+        vkDestroyInstance(instance, NULL);
+        return unavailable("device below Vulkan 1.2", VK_SUCCESS);
+    }
 
     vkGetPhysicalDeviceFeatures(phys, &supported);
     if (!supported.shaderStorageImageWriteWithoutFormat) {
