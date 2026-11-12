@@ -2,6 +2,7 @@
 
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
+- 2026-11-12 (#9) Fill uscale_query_caps from the physical device: vendor id, integer dot product, FP16, MoltenVK and FSR 4 asset folder; vendor runtimes stay 0; caps test on lavapipe.
 - 2026-11-12 (#11) Map uscale frames to the upstream FSR 3 dispatch contract without GPU calls; document jitter/UV motion conventions and verify every field in pure tests with FFX off or on.
 - 2026-11-12 (#8) Require a real Vulkan device on Mesa lavapipe in Linux CI; add a device smoke test with CTest skip support elsewhere.
 - 2026-11-12 (#17) Load vendor runtimes by ordered name list on Windows, Linux and macOS, report missing runtimes, resolve symbols and close handles; test with a build-made shared library on every CI platform.
