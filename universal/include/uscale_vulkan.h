@@ -47,16 +47,20 @@ typedef struct uscale_context_create_info {
 typedef struct uscale_upscale_info {
     uint32_t struct_size;   /* sizeof(uscale_upscale_info) */
     VkCommandBuffer command_buffer;
-    uscale_image color;     /* render-size colour */
+    uscale_image color;     /* render-size colour, without pre-exposure */
     uscale_image depth;     /* render-size depth */
-    uscale_image motion;    /* render-size motion vectors, R16G16_SFLOAT */
+    /* Render-size R16G16_SFLOAT: unjittered previous UV minus current UV,
+     * normalized to the active render extent; +X right, +Y down. */
+    uscale_image motion;
     uscale_image output;    /* display-size output, storage usage */
     uscale_extent render_extent;
+    /* Camera jitter in render pixels, +X right, +Y down, as returned by
+     * FSR's jitter helper (before conversion to projection-matrix offsets). */
     float jitter_x;
     float jitter_y;
     float frame_time_ms;
     float sharpness;        /* 0..1 */
-    float camera_near;
+    float camera_near;      /* camera distances in metres */
     float camera_far;
     float camera_fov_y;     /* radians */
     uint32_t reset_history; /* camera cut: 1 or 0 */

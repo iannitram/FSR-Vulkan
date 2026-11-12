@@ -23,7 +23,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/src/uscale_caps.c` | `uscale_query_caps`: vendor, integer dot product, FP16, MoltenVK, FSR 4 assets, vendor runtimes | stub | 3.01, 5.04, 5.06 |
 | `universal/src/uscale_context.c` | Context lifecycle; picks the backend with `uscale_select_backend`, falls back to FSR 3 if a backend's create fails; routes record calls | stub | 3.02 |
 | `universal/src/backend.h` | Internal backend table `uscale_backend_ops` (create, record_upscale, destroy) and the frame-generation calls | present | 1 |
-| `universal/src/backend_fsr3.c` | FSR 3 upscale through `ffx-vulkan::fsr3-vk-backend-1.1.4` | stub | 3.03, 3.04 |
+| `universal/src/backend_fsr3.c`, `.h` | Pure `uscale_fsr3_map_dispatch` to upstream's `FfxVkPortableUpscaleDispatchInfo`: image metadata/layout states, unchanged render-pixel jitter, normalized UV motion scaled by active render size, milliseconds, camera, sharpness, reset and caller frame id; neutral exposure/metre defaults and absent masks; field tests run with Vulkan headers even when FFX is off. GPU lifecycle through `ffx-vulkan::fsr3-vk-backend-1.1.4` remains stubbed | present (mapping); stub (GPU) | 3.03, 3.04, #11 |
 | `universal/src/framegen_fsr3.c` | Frame generation through `ffx-vulkan::fsr3-vk-framegeneration-3.1.6` and `ffx-vulkan::framegeneration-presenter-policy` | stub | 3.05 |
 | `universal/src/backend_fsr4.c` | FSR 4 through `ffx-vulkan::fsr4-v07-vulkan` and `ffx-vulkan::fsr4-v07-assets`, assets from `fsr4_asset_dir` | stub | 5.03 |
 | `universal/src/runtime_loader.c`, `.h` | Opens the first vendor runtime from a name list (`dlopen`, `LoadLibrary`), reports load status, resolves symbols and closes it | present | 5.02 |

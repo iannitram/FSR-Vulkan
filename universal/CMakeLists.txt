@@ -54,7 +54,7 @@ if(USCALE_WITH_VULKAN)
         src/framegen_fsr3.c)
     target_include_directories(uscale_vulkan PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/../include)
     target_link_libraries(uscale_vulkan PUBLIC uscale_core Vulkan::Vulkan PRIVATE ${CMAKE_DL_LIBS})
     uscale_warnings(uscale_vulkan)
     add_library(uscale::uscale ALIAS uscale_vulkan)
@@ -125,6 +125,11 @@ if(USCALE_BUILD_TESTS)
             target_link_libraries(${_test_name} PRIVATE uscale_vulkan)
         else()
             target_link_libraries(${_test_name} PRIVATE uscale_core)
+        endif()
+        if(_test_name STREQUAL "uscale_vk_fsr3_dispatch_test")
+            # Header-only upstream contract: no FFX build or GPU needed.
+            target_include_directories(${_test_name} PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/../include)
         endif()
         uscale_warnings(${_test_name})
         if(_test_name STREQUAL "uscale_runtime_loader_test")
