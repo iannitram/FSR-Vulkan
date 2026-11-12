@@ -43,6 +43,7 @@ int main(int argc, char **argv)
         if (n > 0 && (size_t)n < sizeof(path)) CHECK(copy_file(argv[1], path));
         CHECK_INT(uscale_dlss_runtime_available(0x10DEu, 0, argv[2]), 1);
         CHECK_INT(uscale_dlss_runtime_available(0x10DEu, 1, argv[2]), 0);
+        if (n > 0 && (size_t)n < sizeof(path)) remove(path);
     }
     USCALE_TEST_END;
 }
