@@ -1351,6 +1351,18 @@ if(FFX_VK_PORTABLE_BUILD_TESTS)
             SKIP_RETURN_CODE 77
         )
 
+        # Pure check of the backend's buffer usage flags; needs no GPU.
+        add_executable(ffx_vk_fsr3_buffer_usage_test tests/fsr3_vk_buffer_usage_test.cpp)
+        set_target_properties(ffx_vk_fsr3_buffer_usage_test PROPERTIES
+            CXX_STANDARD 17
+            CXX_STANDARD_REQUIRED YES
+            CXX_EXTENSIONS NO
+        )
+        target_link_libraries(ffx_vk_fsr3_buffer_usage_test PRIVATE
+            ffx-vulkan::fsr3-vk-backend-1.1.4
+        )
+        add_test(NAME ffx_vk_fsr3_buffer_usage_test COMMAND ffx_vk_fsr3_buffer_usage_test)
+
         add_executable(ffx_vk_fsr3_portable_api_smoke tests/fsr3_vk_backend_smoke.cpp)
         set_target_properties(ffx_vk_fsr3_portable_api_smoke PROPERTIES
             CXX_STANDARD 17
