@@ -2,6 +2,7 @@
 
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
+- 2026-11-12 (#18) Fill the FSR 4 backend create/destroy through `ffx-vulkan::fsr4-v07-vulkan` with v07 files read only from the game's `fsr4_asset_dir` (names from upstream's helper, size-checked, none committed), gated on integer dot product and FP16, `BB_FSR4_PROFILE`/`BB_FSR4_STATS` passed through; no-asset fallback to FSR 3 and the gate tested without a GPU, the device create is the 7.01 check, per-frame dispatch still a stub.
 - 2026-11-12 (#24) Add install rules and CMake package export (uscaleConfig.cmake, uscale::uscale alias), consumer smoke test project, and uscale_install_check verifying no vendor binaries or models are packaged (SPEC M12).
 - 2026-11-12 (#10) Fill the context lifecycle: create picks the backend with uscale_select_backend, falls back to FSR 3 when its create fails, record calls route through the backend table, destroy frees the backend and frame generation; tested with fake backend ops, no GPU.
 - 2026-11-12 (#16) Fill `docs/licences.md` from the NVIDIA RTX SDKs licence, Intel's XeSS licence and AMD's FidelityFX licence: a game may redistribute the DLSS and XeSS runtimes with notices, XeSS has no Linux runtime, the DLSS headers cannot be committed, and no terms were found for the v07 FSR 4 asset files; SPEC's DLSS risk line points to it.

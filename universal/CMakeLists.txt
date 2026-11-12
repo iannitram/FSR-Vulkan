@@ -94,6 +94,7 @@ if(USCALE_WITH_FFX OR (USCALE_BUILD_TESTS AND USCALE_TEST_FSR3_FRAMEGEN))
 endif()
 
 if(USCALE_WITH_FFX)
+    target_compile_definitions(uscale_vulkan PRIVATE USCALE_HAVE_FFX)
     target_link_libraries(uscale_vulkan PRIVATE
         $<BUILD_INTERFACE:ffx-vulkan::fsr3-vk-backend-1.1.4>
         $<BUILD_INTERFACE:ffx-vulkan::fsr3-vk-framegeneration-3.1.6>
@@ -124,6 +125,9 @@ if(USCALE_BUILD_TESTS)
         if(_test_name MATCHES "^uscale_vk_" AND NOT USCALE_WITH_VULKAN)
             continue()
         endif()
+        if(_test_name STREQUAL "uscale_vk_fsr4_backend_test" AND NOT USCALE_WITH_FFX)
+            continue() # names the v07 files with upstream's helper
+        endif()
         add_executable(${_test_name} ${_test_src})
         target_include_directories(${_test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
         if(_test_name MATCHES "^uscale_vk_")
@@ -131,7 +135,8 @@ if(USCALE_BUILD_TESTS)
         else()
             target_link_libraries(${_test_name} PRIVATE uscale_core)
         endif()
-        if(_test_name STREQUAL "uscale_vk_fsr3_dispatch_test" OR _test_name STREQUAL "uscale_vk_context_test")
+        if(_test_name STREQUAL "uscale_vk_fsr3_dispatch_test" OR _test_name STREQUAL "uscale_vk_context_test"
+           OR _test_name STREQUAL "uscale_vk_fsr4_backend_test")
             # Internal headers (backend.h, backend_fsr3.h): no FFX build or GPU needed.
             target_include_directories(${_test_name} PRIVATE
                 ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/../include)
@@ -149,6 +154,11 @@ if(USCALE_BUILD_TESTS)
             file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fsr4_empty)
             add_test(NAME ${_test_name} COMMAND ${_test_name}
                 ${CMAKE_CURRENT_BINARY_DIR}/fsr4_empty ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        elseif(_test_name STREQUAL "uscale_vk_fsr4_backend_test")
+            # A scratch folder the test fills with made-up files and removes again.
+            file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fsr4_fake_assets)
+            add_test(NAME ${_test_name} COMMAND ${_test_name}
+                ${CMAKE_CURRENT_BINARY_DIR}/fsr4_fake_assets)
         else()
             add_test(NAME ${_test_name} COMMAND ${_test_name})
         endif()
