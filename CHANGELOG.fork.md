@@ -2,6 +2,7 @@
 
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
+- 2026-11-12 (#28) Tag and retire FSR 3.1.6 frame-generation bridge allocations and reject frame id 0, from Uncharted-Universal@7cec4936 and MIT peers mark3317/UniversalScalers-Vulkan@a0508e1f, vladtepes22/FSR-Vulkan@ad11f682; add a GPU allocation lifetime regression.
 - 2026-11-11 Roadmap map: the roadmap gained a features block (13 features, from its feature table, stage 7 and the upstream sync); every open issue gets one feature label and a milestone, 1.0 or After 1.0 (my ruling: "Yes, board order").
 - 2026-11-02 My ruling: FSR 4 uses AMD's official files from the game's folder or AMD's download, never from our repo; D5 and M6 stand (approval line).
 - 2026-11-02 My rulings: using this library is optional for the -universal games (D2 softened); DLSS, XeSS and FSR 4 run only through the vendor's own runtime on the player's machine, nothing recovered or extracted in our repo (approval line, M7, the DLSS licence note; #16, #18, #20, #22).
