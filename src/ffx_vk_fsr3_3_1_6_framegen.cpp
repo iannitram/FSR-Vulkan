@@ -441,7 +441,7 @@ ffxVkFsr3_3_1_6FrameGenerationContextRecordPrepare(
     FfxVkFsr3_3_1_6FrameGenerationContext* context,
     const FfxVkFsr3_3_1_6FrameGenerationPrepareInfo* info)
 {
-    if (!context || !info || context->prepared ||
+    if (!context || !info || context->prepared || info->frameId == 0u ||
         info->commandBuffer == VK_NULL_HANDLE || info->renderWidth == 0u || info->renderHeight == 0u ||
         info->renderWidth > context->maxRenderWidth ||
         info->renderHeight > context->maxRenderHeight ||
@@ -463,6 +463,8 @@ ffxVkFsr3_3_1_6FrameGenerationContextRecordPrepare(
         !valid_image(info->depth, VK_FORMAT_R32_SFLOAT, info->renderWidth, info->renderHeight, false) ||
         !valid_motion_image(info->motionVectors, info->renderWidth, info->renderHeight))
         return FFX_VK_FSR3_3_1_6_FRAMEGEN_ERROR_INVALID_ARGUMENT;
+    /* Tag dispatch allocations for retirement; id 0 belongs to long-lived resources. */
+    ffxVkFsr3_3_1_5BridgeBeginFrame(context->bridge, info->frameId);
     if (!context->initialized) {
         const OwnedSharedImage shared[] = {
             context->opticalFlowVector, context->opticalFlowScd, context->dilatedDepth,
@@ -676,6 +678,7 @@ ffxVkFsr3_3_1_6FrameGenerationContextRetireFrame(
             ++retained;
         }
     }
+    ffxVkFsr3_3_1_5BridgeRetireFrame(context->bridge, completedFrameId);
     return FFX_VK_FSR3_3_1_6_FRAMEGEN_OK;
 }
 

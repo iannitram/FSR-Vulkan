@@ -32,6 +32,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/tests/uscale_test.h` | Test harness: `CHECK`, `CHECK_INT`, `CHECK_STR`, `USCALE_TEST_END` | present | 1 |
 | `universal/tests/uscale_*_test.c` | Pure tests, run on every platform | present (version) | 2.x |
 | `universal/tests/uscale_vk_*_test.c` | Tests that need the Vulkan half (built only with `USCALE_WITH_VULKAN`) | present (link) | 3.x, 5.x |
+| `universal/tests/uscale_vk_framegen_retire_test.cpp` | Opt-in FSR 3.1.6 GPU regression: 1,003 generated frames, bounded live memory and descriptor pools, reserved frame id 0 refused; enable `USCALE_TEST_FSR3_FRAMEGEN` ([run and measurements](framegen-retire.md)) | present | #28 |
 | `universal/examples/minimal/` | The example consumer from the integration guide | planned | 6.01 |
 | `docs/integration.md` | How a `-universal` game adds and calls `uscale` | planned | 6.01 |
 | `docs/licences.md` | What each vendor path lets us ship | stub | 5.01 |
@@ -87,6 +88,7 @@ flowchart TD
 | Commit | Files | Change |
 |---|---|---|
 | `cc76692` | `src/ffx_vk_fsr4_v07.c` (+109), `upstream/ffx-1.1.4/sdk/src/backends/vk/ffx_vk.cpp` (+10) | Opt-in env switches `BB_FSR4_PROFILE` (GPU time per pass via timestamps) and `BB_FSR4_STATS` (pipeline executable statistics; the device must enable `pipelineExecutableInfo`) |
+| (this PR, #28) | `src/ffx_vk_fsr3_3_1_6_framegen.cpp` | Begin and retire bridge allocations for each generated frame; refuse reserved frame id 0; from Uncharted-Universal@7cec4936 and MIT peers mark3317/UniversalScalers-Vulkan@a0508e1f, vladtepes22/FSR-Vulkan@ad11f682 |
 | (this PR) | `upstream/ffx-1.1.4/sdk/src/backends/vk/ffx_vk.cpp` (+16 -2) | `findMemoryTypeIndex`: a device-local-only request falls back to a host-visible device-local type when no other type matches (lavapipe, MoltenVK, unified-memory devices); from the sibling fork ijdf/UniversalScalers-Vulkan@0d10361 (MIT) |
 
 Everything else of ours is in our own files: `universal/`, `.github/workflows/fork-ci.yml`, `docs/`, `SPEC.md`, `ROADMAP.md`, `GLOSSARY.md`, `PIPELINE.md`, `AGENTS.fork.md`, `CHANGELOG.fork.md`, `CLAUDE.md`.
@@ -101,6 +103,7 @@ ctest --test-dir build-uscale -C Release --output-on-failure
 
 - Needs CMake 3.16+ and a C11 compiler; the Vulkan half also needs the Vulkan headers and loader. The lint is the build itself: `-Wall -Wextra -Wpedantic -Werror` (GCC, Clang) or `/W4 /WX` (MSVC).
 - A new test is a new file `universal/tests/<name>_test.c`; CMake finds it. Name it `uscale_vk_<name>_test.c` when it needs Vulkan.
+- The optional C++20 frame-generation GPU regression is enabled with `-DUSCALE_TEST_FSR3_FRAMEGEN=ON`; see [run instructions and RTX 3090 Ti measurements](framegen-retire.md).
 - Do not build the repo root with its defaults: it compiles the recovered targets. Upstream's `ci.yml` does; ours does not.
 
 ## Mac / PC / Linux
