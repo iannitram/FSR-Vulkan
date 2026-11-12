@@ -144,6 +144,14 @@ if(USCALE_BUILD_TESTS)
             file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fsr4_empty)
             add_test(NAME ${_test_name} COMMAND ${_test_name}
                 ${CMAKE_CURRENT_BINARY_DIR}/fsr4_empty ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        elseif(_test_name STREQUAL "uscale_vk_caps_runtime_test")
+            set(_runtime_tmp ${CMAKE_CURRENT_BINARY_DIR}/xess_runtime_tmp)
+            file(MAKE_DIRECTORY ${_runtime_tmp})
+            add_dependencies(${_test_name} uscale_runtime_fixture)
+            add_test(NAME ${_test_name} COMMAND ${_test_name}
+                $<TARGET_FILE:uscale_runtime_fixture> ${_runtime_tmp})
+            set_tests_properties(${_test_name} PROPERTIES
+                ENVIRONMENT "DYLD_LIBRARY_PATH=${_runtime_tmp};LD_LIBRARY_PATH=${_runtime_tmp};PATH=${_runtime_tmp}")
         else()
             add_test(NAME ${_test_name} COMMAND ${_test_name})
         endif()

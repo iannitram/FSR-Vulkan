@@ -1,5 +1,5 @@
-/* uscale_query_caps: present (code map: universal/src, roadmap 3.01). The vendor-runtime
- * fields stay 0 until 5.04 (XeSS) and 5.06 (DLSS). SPDX-License-Identifier: MIT */
+/* uscale_query_caps: present (code map: universal/src, roadmap 3.01, 5.04). DLSS runtime
+ * stays 0 until 5.06. SPDX-License-Identifier: MIT */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,11 +11,20 @@
 #include <dirent.h>
 #endif
 
+#include "runtime_loader.h"
 #include "uscale_vulkan.h"
 
 #define USCALE_EXT_DOT_PRODUCT "VK_KHR_shader_integer_dot_product"
 #define USCALE_EXT_FLOAT16 "VK_KHR_shader_float16_int8"
 #define USCALE_EXT_PORTABILITY "VK_KHR_portability_subset" /* MoltenVK advertises it */
+
+#if defined(_WIN32)
+static const char *const k_xess_runtime_names[] = {"libxess.dll"};
+#elif defined(__APPLE__)
+static const char *const k_xess_runtime_names[] = {"libxess.dylib", "libxess.so"};
+#else
+static const char *const k_xess_runtime_names[] = {"libxess.so", "libxess.so.1"};
+#endif
 
 static int has_extension(const VkExtensionProperties *exts, uint32_t count, const char *name)
 {
@@ -136,7 +145,18 @@ uscale_result uscale_query_caps(VkPhysicalDevice physical_device,
     caps.has_fp16 = f16_ok && f16.shaderFloat16 == VK_TRUE;
     caps.is_moltenvk = has_extension(exts, ext_count, USCALE_EXT_PORTABILITY);
     caps.fsr4_assets_available = fsr4_asset_dir != NULL && dir_has_entries(fsr4_asset_dir);
-    /* xess_runtime_available and dlss_runtime_available stay 0 until 5.04 and 5.06. */
+    caps.xess_runtime_available = 0;
+    if (!caps.is_moltenvk) {
+        uscale_runtime *xess_runtime = NULL;
+        if (uscale_runtime_open(k_xess_runtime_names,
+                                (unsigned)(sizeof(k_xess_runtime_names) /
+                                           sizeof(k_xess_runtime_names[0])),
+                                &xess_runtime) == USCALE_OK) {
+            caps.xess_runtime_available = 1;
+            uscale_runtime_close(xess_runtime);
+        }
+    }
+    /* dlss_runtime_available stays 0 until 5.06. */
 
     free(exts);
     *out_caps = caps;
