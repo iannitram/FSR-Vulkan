@@ -40,7 +40,7 @@ def scan_install_tree(prefix):
         for fname in files:
             scanned_count += 1
             full_path = os.path.join(root, fname)
-            rel_path = os.path.relpath(full_path, prefix)
+            rel_path = os.path.relpath(full_path, prefix).replace(os.sep, "/")
             base_name = os.path.basename(fname)
             for pattern, reason in FORBIDDEN_RULES:
                 if pattern.search(base_name) or pattern.search(rel_path):
