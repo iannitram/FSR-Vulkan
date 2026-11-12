@@ -479,6 +479,7 @@ uint32_t findMemoryTypeIndex(
     return bestCandidate;
 }
 
+// From AMD FidelityFX SDK v2.4.0 (7539ae8), Kits/FidelityFX/backend/vk/ffx_vk.cpp, MIT, Copyright (C) 2026 Advanced Micro Devices, Inc.
 VkBufferUsageFlags ffxGetVKBufferUsageFlagsFromResourceUsage(FfxResourceUsage flags)
 {
     VkBufferUsageFlags indirectBit = 0;
@@ -486,10 +487,16 @@ VkBufferUsageFlags ffxGetVKBufferUsageFlagsFromResourceUsage(FfxResourceUsage fl
     if (FFX_CONTAINS_FLAG(flags, FFX_RESOURCE_USAGE_INDIRECT))
         indirectBit = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 
+    // FFX buffers can be copy src/dst (init-upload staging, readback, FFX_GPU_JOB_COPY),
+    // so always allow transfer usage. Fixes VUID-vkCmdCopyBuffer-srcBuffer-00118.
+    const VkBufferUsageFlags transferBits = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
     if (FFX_CONTAINS_FLAG(flags, FFX_RESOURCE_USAGE_UAV))
-        return indirectBit | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+        return indirectBit | transferBits | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     else
-        return indirectBit | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        // A read-only (non-UAV) buffer is a STORAGE_BUFFER when bound as a StructuredBuffer SRV,
+        // or a UNIFORM_BUFFER when bound as a cbuffer, so provide both. Fixes VUID-VkWriteDescriptorSet-descriptorType-00331.
+        return indirectBit | transferBits | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 }
 
 VkImageType ffxGetVKImageTypeFromResourceType(FfxResourceType type)

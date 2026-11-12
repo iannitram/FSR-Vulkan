@@ -118,6 +118,12 @@ if(USCALE_BUILD_TESTS)
     # Every tests/*_test.c is one test. uscale_vk_*_test.c needs the Vulkan half.
     add_library(uscale_runtime_fixture SHARED tests/runtime_loader_fixture.c)
     uscale_warnings(uscale_runtime_fixture)
+    if(WIN32)
+        set_target_properties(uscale_runtime_fixture PROPERTIES OUTPUT_NAME nvngx_dlss)
+    else()
+        set_target_properties(uscale_runtime_fixture PROPERTIES
+            PREFIX "lib" OUTPUT_NAME "nvidia-ngx-dlss.so.310.9.1" SUFFIX "")
+    endif()
     file(GLOB _uscale_tests CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/tests/*_test.c)
     foreach(_test_src IN LISTS _uscale_tests)
         get_filename_component(_test_name ${_test_src} NAME_WE)
@@ -144,6 +150,14 @@ if(USCALE_BUILD_TESTS)
             target_link_libraries(${_test_name} PRIVATE ${CMAKE_DL_LIBS})
             add_dependencies(${_test_name} uscale_runtime_fixture)
             add_test(NAME ${_test_name} COMMAND ${_test_name} $<TARGET_FILE:uscale_runtime_fixture>)
+        elseif(_test_name STREQUAL "uscale_vk_dlss_runtime_test")
+            target_link_libraries(${_test_name} PRIVATE ${CMAKE_DL_LIBS})
+            target_include_directories(${_test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+            add_dependencies(${_test_name} uscale_runtime_fixture)
+            file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dlss_runtime_search)
+            add_test(NAME ${_test_name} COMMAND ${_test_name}
+                $<TARGET_FILE:uscale_runtime_fixture>
+                ${CMAKE_CURRENT_BINARY_DIR}/dlss_runtime_search)
         elseif(_test_name STREQUAL "uscale_vk_caps_test")
             # Empty folder for the FSR 4 asset check; the source include folder is present.
             file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fsr4_empty)
