@@ -3,6 +3,9 @@
  * with made-up files written into a scratch folder (argv[1]) and removed again.
  * No asset file is committed; the real device create is the 7.01 check on a GPU.
  * SPDX-License-Identifier: MIT */
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS /* MSVC /W4 /WX: fopen and getenv are fine here */
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 

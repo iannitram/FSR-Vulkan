@@ -1,6 +1,9 @@
 /* Backend FSR4: upstream FSR 4 v07 provider (ffx-vulkan::fsr4-v07-vulkan) with the game's
  * assets, read only from fsr4_asset_dir. We ship and commit no model file.
  * Create is filled; record_upscale stays a stub. SPDX-License-Identifier: MIT */
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS /* MSVC /W4 /WX: fopen and getenv are fine here */
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
