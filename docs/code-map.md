@@ -82,11 +82,12 @@ flowchart TD
 
 ## Where our work is
 
-`git log upstream/main..main`. Our only edits to upstream-owned files are the FSR 4 profiling switches (D1):
+`git log upstream/main..main`. Our only edits to upstream-owned files are the FSR 4 profiling switches (D1) and the fixes below:
 
 | Commit | Files | Change |
 |---|---|---|
 | `cc76692` | `src/ffx_vk_fsr4_v07.c` (+109), `upstream/ffx-1.1.4/sdk/src/backends/vk/ffx_vk.cpp` (+10) | Opt-in env switches `BB_FSR4_PROFILE` (GPU time per pass via timestamps) and `BB_FSR4_STATS` (pipeline executable statistics; the device must enable `pipelineExecutableInfo`) |
+| (this PR) | `upstream/ffx-1.1.4/sdk/src/backends/vk/ffx_vk.cpp` (+16 -2) | `findMemoryTypeIndex`: a device-local-only request falls back to a host-visible device-local type when no other type matches (lavapipe, MoltenVK, unified-memory devices); from the sibling fork ijdf/UniversalScalers-Vulkan@0d10361 (MIT) |
 
 Everything else of ours is in our own files: `universal/`, `.github/workflows/fork-ci.yml`, `docs/`, `SPEC.md`, `ROADMAP.md`, `GLOSSARY.md`, `PIPELINE.md`, `AGENTS.fork.md`, `CHANGELOG.fork.md`, `CLAUDE.md`.
 
