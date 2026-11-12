@@ -1,4 +1,7 @@
 /* DLSS runtime discovery with a harmless test shared library. SPDX-License-Identifier: MIT */
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS /* MSVC /W4 /WX: fopen is fine here (C4996) */
+#endif
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>

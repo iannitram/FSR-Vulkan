@@ -138,7 +138,9 @@ static void test_paths_and_loader(const char *dir)
     char *tmp = (char *)malloc(USCALE_FSR4_PATH_MAX);
 
     if (p == NULL || tmp == NULL) {
-        CHECK(0);
+        CHECK(p != NULL && tmp != NULL); /* not CHECK(0): MSVC C4127 */
+        free(tmp);
+        free(p);
         return;
     }
     CHECK_INT(uscale_fsr4_build_paths(NULL, USCALE_QUALITY_QUALITY, d4k, p),

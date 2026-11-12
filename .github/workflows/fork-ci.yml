@@ -23,6 +23,9 @@ jobs:
             ffx: 'ON'
           - os: macos-latest
             ffx: 'ON'
+          # Windows OFF stays the pure half without a Vulkan SDK; ON adds the SDK (4.01).
+          - os: windows-latest
+            ffx: 'ON'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +49,26 @@ jobs:
       - name: Install Vulkan headers, loader and MoltenVK (macOS)
         if: runner.os == 'macOS'
         run: brew install vulkan-headers vulkan-loader molten-vk
+      # Pinned SDK; the action caches C:\VulkanSDK between runs. Its runtime gives the
+      # tests vulkan-1.dll; there is no Vulkan driver, so the GPU tests skip (77).
+      - name: Install Vulkan SDK and runtime (Windows)
+        if: runner.os == 'Windows' && matrix.ffx == 'ON'
+        uses: jakoch/install-vulkan-sdk-action@7fe84289ddbf750f7eff9f8e4588e600e1dd06c8 # v1.8.1
+        with:
+          vulkan_version: 1.4.341.1
+          install_runtime: true
+          cache: true
+          stripdown: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Put the Vulkan runtime on PATH (Windows)
+        if: runner.os == 'Windows' && matrix.ffx == 'ON'
+        shell: bash
+        run: |
+          sdk=$(cygpath -u "$VULKAN_SDK")
+          dll=$(find "$sdk" -ipath '*x64*' -iname vulkan-1.dll -print -quit)
+          test -n "$dll"
+          cygpath -w "$(dirname "$dll")" >> "$GITHUB_PATH"
+          echo "vulkan-1.dll: $dll"
       - name: Configure
         shell: bash
         run: |
@@ -85,7 +108,9 @@ jobs:
       - name: Recovered pipelines are not built (ruling 2026-11-01)
         shell: bash
         run: |
-          # EXCLUDE_FROM_ALL still generates target directories; check files.
-          hits=$(find build-uscale -type f \( -iname '*xess_recovered*' -o -iname '*dlss_contract*' -o -iname '*d4r_*' \) -print -quit)
+          # EXCLUDE_FROM_ALL still generates target directories, and Visual Studio writes
+          # a project file for every target at configure time; check built files only.
+          hits=$(find build-uscale -type f \( -iname '*xess_recovered*' -o -iname '*dlss_contract*' -o -iname '*d4r_*' \) \
+            ! -iname '*.vcxproj' ! -iname '*.vcxproj.filters' -print -quit)
           if [ -n "$hits" ]; then echo "Forbidden targets were built:"; echo "$hits"; exit 1; fi
           echo "none built"

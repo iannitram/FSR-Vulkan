@@ -41,7 +41,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/examples/minimal/` | The example consumer from the integration guide | planned | 6.01 |
 | `docs/integration.md` | How a `-universal` game adds and calls `uscale` | planned | 6.01 |
 | `docs/licences.md` | What each vendor path lets us ship | stub | 5.01 |
-| `.github/workflows/fork-ci.yml` | Our CI: `universal/` on Ubuntu, Windows and macOS, plus `USCALE_WITH_FFX=ON` on Ubuntu; Linux installs Mesa and pins lavapipe, requires device tests to run; tests `cmake --install`, downstream consumer project build and `uscale_install_check` (clean and planted fail) on all platforms; checks no recovered pipeline file was built | present | 1, 2.05, 2.06, 4.01, 4.02, 6.02 |
+| `.github/workflows/fork-ci.yml` | Our CI: `universal/` on Ubuntu, Windows and macOS, plus `USCALE_WITH_FFX=ON` on Ubuntu, macOS and Windows (MSVC with a pinned, cached Vulkan SDK and runtime; GPU tests skip); Linux installs Mesa and pins lavapipe, requires device tests to run; tests `cmake --install`, downstream consumer project build and `uscale_install_check` (clean and planted fail) on all platforms; checks no recovered pipeline file was built | present | 1, 2.05, 2.06, 4.01, 4.02, 6.02 |
 
 ### How it fits together
 
@@ -118,7 +118,7 @@ ctest --test-dir build-uscale -C Release --output-on-failure
 |---|---|---|---|
 | Compiler | GCC, Clang | MSVC | Apple Clang |
 | Vulkan | distro loader; Mesa lavapipe pinned via `VK_DRIVER_FILES` in CI (2.06) | Vulkan SDK in CI (4.01) | MoltenVK through the loader (4.02) |
-| CI today | pure + Vulkan half + FFX; device test required on lavapipe | pure half | pure half + Vulkan half + FFX on MoltenVK (Apple Clang); every test that needs no GPU |
+| CI today | pure + Vulkan half + FFX; device test required on lavapipe | pure half; pure + Vulkan half + FFX under MSVC `/W4 /WX` (Vulkan SDK 1.4.341.1, 4.01); every test that needs no GPU, the GPU tests skip | pure half + Vulkan half + FFX on MoltenVK (Apple Clang); every test that needs no GPU |
 | Runtime libraries | `dlopen` | `LoadLibrary` | `dlopen` |
 | DLSS / XeSS | runtime if present | runtime if present | none: falls back to FSR 3 |
 | Device check | AMD handheld, RTX 3090 Ti desktop (7.01, 7.02) | RTX 3090 Ti desktop (7.02) | Mac mini (7.03) |

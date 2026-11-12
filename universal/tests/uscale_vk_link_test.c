@@ -7,7 +7,7 @@
 
 int main(void)
 {
-    uscale_context *ctx = (uscale_context *)0x1;
+    uscale_context *ctx = (uscale_context *)(uintptr_t)1; /* no int-to-pointer warning (C4312) */
     uscale_result r = uscale_context_create(NULL, &ctx);
     CHECK(r != USCALE_OK);
     CHECK(ctx == NULL);

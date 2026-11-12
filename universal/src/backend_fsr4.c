@@ -12,8 +12,16 @@
 #include "backend_fsr4.h"
 
 #ifdef USCALE_HAVE_FFX
+#ifdef _MSC_VER
+/* Upstream's FSR 4 types use anonymous unions; MSVC /W4 calls them C4201 in C. */
+#pragma warning(push)
+#pragma warning(disable : 4201)
+#endif
 #include "ffx_vk_fsr4_v07.h"
 #include "ffx_vk_fsr4_v07_assets.h"
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 _Static_assert(USCALE_FSR4_PASS_COUNT == FFX_FSR4_VK_PASS_COUNT, "pass count");
 _Static_assert(FFX_FSR4_MODEL_PASS_COUNT + 4u == USCALE_FSR4_PASS_COUNT, "pass layout");
