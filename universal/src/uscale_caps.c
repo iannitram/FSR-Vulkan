@@ -1,5 +1,5 @@
-/* uscale_query_caps: present (code map: universal/src, roadmap 3.01, 5.04). DLSS runtime
- * stays 0 until 5.06. SPDX-License-Identifier: MIT */
+/* uscale_query_caps: present (code map: universal/src, roadmap 3.01, 5.04, 5.06). Reports the XeSS and
+ * DLSS runtimes when found, 0 otherwise. SPDX-License-Identifier: MIT */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
