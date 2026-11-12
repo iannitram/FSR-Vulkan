@@ -4,6 +4,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(uscale VERSION 0.1.0 LANGUAGES C)
 
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
@@ -35,7 +38,8 @@ add_library(uscale_core STATIC
     src/uscale_select.c
     src/uscale_profile.c)
 target_include_directories(uscale_core PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 uscale_warnings(uscale_core)
 add_library(uscale::core ALIAS uscale_core)
 
@@ -54,6 +58,7 @@ if(USCALE_WITH_VULKAN)
         src/framegen_fsr3.c)
     target_include_directories(uscale_vulkan PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/../include)
     target_link_libraries(uscale_vulkan PUBLIC uscale_core Vulkan::Vulkan PRIVATE ${CMAKE_DL_LIBS})
     uscale_warnings(uscale_vulkan)
@@ -90,10 +95,10 @@ endif()
 
 if(USCALE_WITH_FFX)
     target_link_libraries(uscale_vulkan PRIVATE
-        ffx-vulkan::fsr3-vk-backend-1.1.4
-        ffx-vulkan::fsr3-vk-framegeneration-3.1.6
-        ffx-vulkan::framegeneration-presenter-policy
-        ffx-vulkan::fsr4-v07-vulkan)
+        $<BUILD_INTERFACE:ffx-vulkan::fsr3-vk-backend-1.1.4>
+        $<BUILD_INTERFACE:ffx-vulkan::fsr3-vk-framegeneration-3.1.6>
+        $<BUILD_INTERFACE:ffx-vulkan::framegeneration-presenter-policy>
+        $<BUILD_INTERFACE:ffx-vulkan::fsr4-v07-vulkan>)
 endif()
 
 if(USCALE_BUILD_TESTS)
@@ -160,3 +165,50 @@ if(USCALE_BUILD_TESTS)
         endif()
     endforeach()
 endif()
+
+# Install and package export rules (SPEC M12).
+install(TARGETS uscale_core
+    EXPORT uscaleTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+if(USCALE_WITH_VULKAN)
+    install(TARGETS uscale_vulkan
+        EXPORT uscaleTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+endif()
+
+install(FILES include/uscale.h include/uscale_vulkan.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(EXPORT uscaleTargets
+    FILE uscaleTargets.cmake
+    NAMESPACE uscale::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uscale
+)
+
+configure_package_config_file(
+    cmake/uscaleConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/uscaleConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uscale
+)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/uscaleConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/uscaleConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/uscaleConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/uscale
+)

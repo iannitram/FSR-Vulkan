@@ -12,7 +12,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 
 | Path | What it owns | Status | Roadmap |
 |---|---|---|---|
-| `universal/CMakeLists.txt` | Targets `uscale_core` (`uscale::core`, pure half), `uscale_vulkan` (`uscale::uscale`, Vulkan half); options `USCALE_BUILD_TESTS`, `USCALE_WITH_VULKAN` (on when Vulkan is found), `USCALE_WITH_FFX` (off; requires Vulkan, adds upstream with `EXCLUDE_FROM_ALL` and links only FSR 3, frame generation, presenter policy and FSR 4 v07); shares one upstream tree with `USCALE_TEST_FSR3_FRAMEGEN`; our lint (warnings are errors); every `tests/*_test.c` becomes a CTest test | present | 1, 2.05 |
+| `universal/CMakeLists.txt` | Targets `uscale_core` (`uscale::core`, pure half), `uscale_vulkan` (`uscale::uscale`, Vulkan half); options `USCALE_BUILD_TESTS`, `USCALE_WITH_VULKAN` (on when Vulkan is found), `USCALE_WITH_FFX` (off; requires Vulkan, adds upstream with `EXCLUDE_FROM_ALL` and links only FSR 3, frame generation, presenter policy and FSR 4 v07); shares one upstream tree with `USCALE_TEST_FSR3_FRAMEGEN`; our lint (warnings are errors); every `tests/*_test.c` becomes a CTest test; install and package export rules (`uscaleConfig.cmake`, `uscaleTargets.cmake`) | present | 1, 2.05, 6.02 |
 | `universal/include/uscale.h` | Pure API: version macros, `uscale_result`, `uscale_backend`, `uscale_quality`, `uscale_extent`, `uscale_device_caps`, profiling flag bits; `uscale_version`, `uscale_result_name`, `uscale_backend_name`, `uscale_render_extent`, `uscale_select_backend`, `uscale_profile_flags_from_env` | present | 1 |
 | `universal/include/uscale_vulkan.h` | Vulkan API: `uscale_image`, `uscale_context_create_info`, `uscale_upscale_info`, `uscale_framegen_info`; `uscale_query_caps`, `uscale_context_create`, `uscale_context_backend`, `uscale_record_upscale`, `uscale_record_framegen`, `uscale_retire_frame`, `uscale_context_destroy` | present | 1 |
 | `universal/src/uscale_version.c` | `uscale_version` | present | 1 |
@@ -34,10 +34,13 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/tests/uscale_vk_*_test.c` | Tests that need the Vulkan half (built only with `USCALE_WITH_VULKAN`) | present (link, device) | 2.06, 3.x, 5.x |
 | `universal/tests/uscale_vk_device_test.c` | Creates an instance, device and queue; CTest skips with code 77 when no device is available, unless `USCALE_REQUIRE_VK_DEVICE=1` | present | 2.06 (#8) |
 | `universal/tests/uscale_vk_framegen_retire_test.cpp` | Opt-in FSR 3.1.6 GPU regression: 1,003 generated frames, bounded live memory and descriptor pools, reserved frame id 0 refused; enable `USCALE_TEST_FSR3_FRAMEGEN` ([run and measurements](framegen-retire.md)) | present | #28 |
+| `universal/cmake/uscaleConfig.cmake.in` | CMake package configuration template for `find_package(uscale CONFIG REQUIRED)`, exports `uscale::uscale` and `uscale::core` aliases and finds dependencies | present | 6.02 |
+| `universal/scripts/uscale_install_check.py` | Install tree verification script: fails if install tree contains NVIDIA, AMD, Intel binaries or model files (SPEC M12); `--test-planted` verifies planted file failure | present | 6.02 |
+| `universal/tests/consumer/` | Tiny consumer smoke project: finds `uscale` via `find_package(uscale CONFIG REQUIRED)` and links `uscale::uscale` | present | 6.02 |
 | `universal/examples/minimal/` | The example consumer from the integration guide | planned | 6.01 |
 | `docs/integration.md` | How a `-universal` game adds and calls `uscale` | planned | 6.01 |
 | `docs/licences.md` | What each vendor path lets us ship | stub | 5.01 |
-| `.github/workflows/fork-ci.yml` | Our CI: `universal/` on Ubuntu, Windows and macOS, plus `USCALE_WITH_FFX=ON` on Ubuntu; Linux installs Mesa and pins lavapipe, requires device tests to run; checks no recovered pipeline file was built | present | 1, 2.05, 2.06, 4.01, 4.02 |
+| `.github/workflows/fork-ci.yml` | Our CI: `universal/` on Ubuntu, Windows and macOS, plus `USCALE_WITH_FFX=ON` on Ubuntu; Linux installs Mesa and pins lavapipe, requires device tests to run; tests `cmake --install`, downstream consumer project build and `uscale_install_check` (clean and planted fail) on all platforms; checks no recovered pipeline file was built | present | 1, 2.05, 2.06, 4.01, 4.02, 6.02 |
 
 ### How it fits together
 
