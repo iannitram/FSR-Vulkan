@@ -26,7 +26,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/src/backend_fsr3.c` | FSR 3 upscale through `ffx-vulkan::fsr3-vk-backend-1.1.4` | stub | 3.03, 3.04 |
 | `universal/src/framegen_fsr3.c` | Frame generation through `ffx-vulkan::fsr3-vk-framegeneration-3.1.6` and `ffx-vulkan::framegeneration-presenter-policy` | stub | 3.05 |
 | `universal/src/backend_fsr4.c` | FSR 4 through `ffx-vulkan::fsr4-v07-vulkan` and `ffx-vulkan::fsr4-v07-assets`, assets from `fsr4_asset_dir` | stub | 5.03 |
-| `universal/src/runtime_loader.c`, `.h` | Opens a vendor runtime by name list (`dlopen`, `LoadLibrary`), resolves symbols | stub | 5.02 |
+| `universal/src/runtime_loader.c`, `.h` | Opens the first vendor runtime from a name list (`dlopen`, `LoadLibrary`), reports load status, resolves symbols and closes it | present | 5.02 |
 | `universal/src/backend_xess.c` | XeSS through Intel's runtime | stub | 5.05 |
 | `universal/src/backend_dlss.c` | DLSS through NVIDIA's runtime (NGX Vulkan) | stub | 5.07 |
 | `universal/tests/uscale_test.h` | Test harness: `CHECK`, `CHECK_INT`, `CHECK_STR`, `USCALE_TEST_END` | present | 1 |
