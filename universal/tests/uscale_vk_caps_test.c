@@ -120,8 +120,8 @@ int main(int argc, char **argv)
     CHECK_INT(caps.is_moltenvk, has_device_extension(physical, "VK_KHR_portability_subset"));
     printf("caps: dot=%u fp16=%u moltenvk=%u\n", (unsigned)caps.has_int_dot_product,
            (unsigned)caps.has_fp16, (unsigned)caps.is_moltenvk);
-    /* XeSS discovery is implemented in 5.04. DLSS depends on local files, so the caps field
-     * must equal the helper's answer for this device and the default search. */
+    /* XeSS: not installed on a CI system, so 0 (the runtime test covers present). DLSS depends on
+     * local files, so the caps field must equal the helper's answer for this device and search. */
     CHECK_INT(caps.xess_runtime_available, 0);
     CHECK_INT(caps.dlss_runtime_available,
               uscale_dlss_runtime_available(properties.vendorID, caps.is_moltenvk, NULL));
