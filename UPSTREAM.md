@@ -92,7 +92,9 @@ The first compute slice now vendors these MIT-licensed groups at their
 upstream-relative paths:
 
 - `sdk/include/FidelityFX/host/backends/vk/ffx_vk.h`;
-- `sdk/src/backends/vk/ffx_vk.cpp`;
+- `sdk/src/backends/vk/ffx_vk.cpp` (our edit: `ffxGetVKBufferUsageFlagsFromResourceUsage`
+  takes AMD FidelityFX SDK v2.4.0 commit 7539ae8b6568ad29ed78a753404351daf3b5cca7,
+  `Kits/FidelityFX/backend/vk/ffx_vk.cpp` L414-431, MIT; issue #50);
 - `sdk/src/shared/ffx_breadcrumbs_list.{h,cpp}`;
 - `sdk/src/backends/shared/ffx_shader_blobs.{h,cpp}`;
 - `ffx_fsr3upscaler_shaderblobs.{h,cpp}` in

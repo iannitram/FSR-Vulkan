@@ -13,6 +13,9 @@
 
 #define LAVAPIPE_VENDOR_ID 0x10005u /* VK_VENDOR_ID_MESA */
 
+uint32_t uscale_dlss_runtime_available(uint32_t vendor_id, uint32_t is_moltenvk,
+                                       const char *directory);
+
 static int unavailable(const char *reason, VkResult result)
 {
     const char *required = getenv("USCALE_REQUIRE_VK_DEVICE");
@@ -117,9 +120,11 @@ int main(int argc, char **argv)
     CHECK_INT(caps.is_moltenvk, has_device_extension(physical, "VK_KHR_portability_subset"));
     printf("caps: dot=%u fp16=%u moltenvk=%u\n", (unsigned)caps.has_int_dot_product,
            (unsigned)caps.has_fp16, (unsigned)caps.is_moltenvk);
-    /* Vendor runtimes: XeSS not installed on system; DLSS not filled until 5.06. */
+    /* XeSS: not installed on a CI system, so 0 (the runtime test covers present). DLSS depends on
+     * local files, so the caps field must equal the helper's answer for this device and search. */
     CHECK_INT(caps.xess_runtime_available, 0);
-    CHECK_INT(caps.dlss_runtime_available, 0);
+    CHECK_INT(caps.dlss_runtime_available,
+              uscale_dlss_runtime_available(properties.vendorID, caps.is_moltenvk, NULL));
 
     /* FSR 4 assets: no folder, an empty folder, a missing folder, a present folder. */
     CHECK_INT(query(physical, instance, NULL, &caps), USCALE_OK);
