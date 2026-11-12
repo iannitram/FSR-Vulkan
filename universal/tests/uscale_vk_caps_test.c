@@ -92,8 +92,28 @@ int main(int argc, char **argv)
     CHECK_INT(caps.vendor_id, properties.vendorID);
     if (strstr(properties.deviceName, "llvmpipe") != NULL)
         CHECK_INT(caps.vendor_id, LAVAPIPE_VENDOR_ID);
-    CHECK(caps.has_int_dot_product <= 1);
-    CHECK(caps.has_fp16 <= 1);
+    /* Dot product and FP16: the device's feature bit, counted when the extension is listed
+     * or the core version has it (the same rule the library uses). */
+    {
+        VkPhysicalDeviceShaderIntegerDotProductFeatures dot = {0};
+        VkPhysicalDeviceShaderFloat16Int8Features f16 = {0};
+        VkPhysicalDeviceFeatures2 features = {0};
+        int dot_expect, f16_expect;
+        dot.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_FEATURES;
+        f16.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
+        features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        features.pNext = &dot;
+        dot.pNext = &f16;
+        vkGetPhysicalDeviceFeatures2(physical, &features);
+        dot_expect = dot.shaderIntegerDotProduct == VK_TRUE &&
+            (has_device_extension(physical, "VK_KHR_shader_integer_dot_product") ||
+             properties.apiVersion >= VK_API_VERSION_1_3);
+        f16_expect = f16.shaderFloat16 == VK_TRUE &&
+            (has_device_extension(physical, "VK_KHR_shader_float16_int8") ||
+             properties.apiVersion >= VK_API_VERSION_1_2);
+        CHECK_INT(caps.has_int_dot_product, dot_expect);
+        CHECK_INT(caps.has_fp16, f16_expect);
+    }
     CHECK_INT(caps.is_moltenvk, has_device_extension(physical, "VK_KHR_portability_subset"));
     printf("caps: dot=%u fp16=%u moltenvk=%u\n", (unsigned)caps.has_int_dot_product,
            (unsigned)caps.has_fp16, (unsigned)caps.is_moltenvk);
