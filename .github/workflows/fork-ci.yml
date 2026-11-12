@@ -21,6 +21,8 @@ jobs:
         include:
           - os: ubuntu-24.04
             ffx: 'ON'
+          - os: macos-latest
+            ffx: 'ON'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -41,9 +43,15 @@ jobs:
           test -n "$lvp_icd"
           echo "VK_DRIVER_FILES=$lvp_icd" >> "$GITHUB_ENV"
           echo "USCALE_REQUIRE_VK_DEVICE=1" >> "$GITHUB_ENV"
+      - name: Install Vulkan headers, loader and MoltenVK (macOS)
+        if: runner.os == 'macOS'
+        run: brew install vulkan-headers vulkan-loader molten-vk
       - name: Configure
         shell: bash
-        run: cmake -S universal -B build-uscale -DCMAKE_BUILD_TYPE=Release -DUSCALE_WITH_FFX=${{ matrix.ffx }}
+        run: |
+          EXTRA=""
+          if [ "$RUNNER_OS" = "macOS" ]; then EXTRA="-DCMAKE_PREFIX_PATH=$(brew --prefix)"; fi
+          cmake -S universal -B build-uscale -DCMAKE_BUILD_TYPE=Release -DUSCALE_WITH_FFX=${{ matrix.ffx }} $EXTRA
       - name: Build (warnings are errors)
         shell: bash
         run: cmake --build build-uscale --config Release --parallel

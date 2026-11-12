@@ -113,7 +113,7 @@ ctest --test-dir build-uscale -C Release --output-on-failure
 |---|---|---|---|
 | Compiler | GCC, Clang | MSVC | Apple Clang |
 | Vulkan | distro loader; Mesa lavapipe pinned via `VK_DRIVER_FILES` in CI (2.06) | Vulkan SDK in CI (4.01) | MoltenVK through the loader (4.02) |
-| CI today | pure + Vulkan half + FFX; device test required on lavapipe | pure half | pure half |
+| CI today | pure + Vulkan half + FFX; device test required on lavapipe | pure half | pure half + Vulkan half + FFX on MoltenVK (Apple Clang); every test that needs no GPU |
 | Runtime libraries | `dlopen` | `LoadLibrary` | `dlopen` |
 | DLSS / XeSS | runtime if present | runtime if present | none: falls back to FSR 3 |
 | Device check | AMD handheld, RTX 3090 Ti desktop (7.01, 7.02) | RTX 3090 Ti desktop (7.02) | Mac mini (7.03) |
