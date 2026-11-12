@@ -1,8 +1,11 @@
 # Changelog (fork)
 
+- 2026-11-12 (#21) Detect NVIDIA's DLSS runtime in `uscale_query_caps` on Windows (LoadLibrary search order) and Linux (executable folder, `LD_LIBRARY_PATH`, standard folders), force it unavailable on MoltenVK, and cover present/missing files with a temporary test runtime; licensing answer: [5.01](docs/licences.md#questions-501-answers).
+
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
 - 2026-11-12 (#18) Fill the FSR 4 backend create/destroy through `ffx-vulkan::fsr4-v07-vulkan` with v07 files read only from the game's `fsr4_asset_dir` (names from upstream's helper, size-checked, none committed), gated on integer dot product and FP16, `BB_FSR4_PROFILE`/`BB_FSR4_STATS` passed through; no-asset fallback to FSR 3 and the gate tested without a GPU, the device create is the 7.01 check, per-frame dispatch still a stub.
+- 2026-11-12 (#50) Read-only buffers from the FSR 3 Vulkan backend get STORAGE_BUFFER and transfer usage, UAVs get transfer usage, from AMD FidelityFX SDK v2.4.0 commit 7539ae8b6568ad29ed78a753404351daf3b5cca7, `Kits/FidelityFX/backend/vk/ffx_vk.cpp` L414-431, MIT (file header and `docs/license.md` L442); pure test with no GPU; repairs the `ffx_vk.cpp` line in `CURRENT_SHA256SUMS`.
 - 2026-11-12 (#24) Add install rules and CMake package export (uscaleConfig.cmake, uscale::uscale alias), consumer smoke test project, and uscale_install_check verifying no vendor binaries or models are packaged (SPEC M12).
 - 2026-11-12 (#10) Fill the context lifecycle: create picks the backend with uscale_select_backend, falls back to FSR 3 when its create fails, record calls route through the backend table, destroy frees the backend and frame generation; tested with fake backend ops, no GPU.
 - 2026-11-12 (#16) Fill `docs/licences.md` from the NVIDIA RTX SDKs licence, Intel's XeSS licence and AMD's FidelityFX licence: a game may redistribute the DLSS and XeSS runtimes with notices, XeSS has no Linux runtime, the DLSS headers cannot be committed, and no terms were found for the v07 FSR 4 asset files; SPEC's DLSS risk line points to it.
