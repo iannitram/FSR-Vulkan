@@ -62,29 +62,43 @@ else()
     add_library(uscale::uscale ALIAS uscale_core)
 endif()
 
+if(USCALE_WITH_FFX OR (USCALE_BUILD_TESTS AND USCALE_TEST_FSR3_FRAMEGEN))
+    if(NOT USCALE_WITH_VULKAN)
+        message(FATAL_ERROR "USCALE_WITH_FFX and USCALE_TEST_FSR3_FRAMEGEN need USCALE_WITH_VULKAN=ON")
+    endif()
+    # Enable C++ here so our C consumers can link the upstream C++ libraries.
+    # The normal uscale build still needs only a C11 compiler.
+    enable_language(CXX)
+
+    # Share one upstream tree with the opt-in frame-generation regression.
+    # Force these even for a reused cache: upstream's tests/probe/install must
+    # stay off, and the SDK 2.3 scaffold supplies the 3.1.6 FI/OF target.
+    set(FFX_VK_PORTABLE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(FFX_VK_PORTABLE_BUILD_PROBE OFF CACHE BOOL "" FORCE)
+    set(FFX_VK_PORTABLE_INSTALL OFF CACHE BOOL "" FORCE)
+    set(FFX_VK_PORTABLE_BUILD_FSR3_3_1_5_SCAFFOLD ON CACHE BOOL "" FORCE)
+    # The regression alone retains its smaller frame-generation-only closure.
+    set(FFX_VK_PORTABLE_BUILD_FSR3_HOST ${USCALE_WITH_FFX} CACHE BOOL "" FORCE)
+    set(FFX_VK_PORTABLE_BUILD_FSR3_VK_BACKEND ${USCALE_WITH_FFX} CACHE BOOL "" FORCE)
+    set(FFX_VK_PORTABLE_BUILD_FSR4_V07_VULKAN ${USCALE_WITH_FFX} CACHE BOOL "" FORCE)
+
+    # Upstream also defines recovered targets unconditionally. Excluding its
+    # ALL target and linking individual FSR targets keeps those unbuilt
+    # (AGENTS.fork.md, ruling 2026-11-01). Never link its effects umbrella.
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/.." upstream-fsr EXCLUDE_FROM_ALL)
+endif()
+
 if(USCALE_WITH_FFX)
-    # Planned (ROADMAP.md stage 2): add the repo root with EXCLUDE_FROM_ALL and
-    # link only the FSR 3, frame-generation, presenter and FSR 4 v07 targets.
-    # Never xess-recovered or dlss-contract (AGENTS.fork.md, ruling 2026-11-01).
-    message(FATAL_ERROR "USCALE_WITH_FFX is not wired yet (see ROADMAP.md stage 2)")
+    target_link_libraries(uscale_vulkan PRIVATE
+        ffx-vulkan::fsr3-vk-backend-1.1.4
+        ffx-vulkan::fsr3-vk-framegeneration-3.1.6
+        ffx-vulkan::framegeneration-presenter-policy
+        ffx-vulkan::fsr4-v07-vulkan)
 endif()
 
 if(USCALE_BUILD_TESTS)
     enable_testing()
     if(USCALE_TEST_FSR3_FRAMEGEN)
-        if(NOT USCALE_WITH_VULKAN)
-            message(FATAL_ERROR "USCALE_TEST_FSR3_FRAMEGEN needs USCALE_WITH_VULKAN=ON")
-        endif()
-        enable_language(CXX)
-        set(FFX_VK_PORTABLE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-        set(FFX_VK_PORTABLE_BUILD_PROBE OFF CACHE BOOL "" FORCE)
-        set(FFX_VK_PORTABLE_BUILD_FSR3_HOST OFF CACHE BOOL "" FORCE)
-        set(FFX_VK_PORTABLE_BUILD_FSR3_VK_BACKEND OFF CACHE BOOL "" FORCE)
-        set(FFX_VK_PORTABLE_BUILD_FSR4_V07_VULKAN OFF CACHE BOOL "" FORCE)
-        set(FFX_VK_PORTABLE_INSTALL OFF CACHE BOOL "" FORCE)
-        set(FFX_VK_PORTABLE_BUILD_FSR3_3_1_5_SCAFFOLD ON CACHE BOOL "" FORCE)
-        # Only the linked FSR target is built; never the root's default ALL target.
-        add_subdirectory(.. upstream-fsr EXCLUDE_FROM_ALL)
         add_executable(uscale_vk_framegen_retire_test tests/uscale_vk_framegen_retire_test.cpp)
         target_compile_features(uscale_vk_framegen_retire_test PRIVATE cxx_std_20)
         target_link_libraries(uscale_vk_framegen_retire_test PRIVATE

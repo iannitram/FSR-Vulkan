@@ -12,7 +12,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 
 | Path | What it owns | Status | Roadmap |
 |---|---|---|---|
-| `universal/CMakeLists.txt` | Targets `uscale_core` (`uscale::core`, pure half), `uscale_vulkan` (`uscale::uscale`, Vulkan half); options `USCALE_BUILD_TESTS`, `USCALE_WITH_VULKAN` (on when Vulkan is found), `USCALE_WITH_FFX` (off; links upstream targets); our lint (warnings are errors); every `tests/*_test.c` becomes a CTest test | present (FFX wiring stub) | 1, 2.05 |
+| `universal/CMakeLists.txt` | Targets `uscale_core` (`uscale::core`, pure half), `uscale_vulkan` (`uscale::uscale`, Vulkan half); options `USCALE_BUILD_TESTS`, `USCALE_WITH_VULKAN` (on when Vulkan is found), `USCALE_WITH_FFX` (off; requires Vulkan, adds upstream with `EXCLUDE_FROM_ALL` and links only FSR 3, frame generation, presenter policy and FSR 4 v07); shares one upstream tree with `USCALE_TEST_FSR3_FRAMEGEN`; our lint (warnings are errors); every `tests/*_test.c` becomes a CTest test | present | 1, 2.05 |
 | `universal/include/uscale.h` | Pure API: version macros, `uscale_result`, `uscale_backend`, `uscale_quality`, `uscale_extent`, `uscale_device_caps`, profiling flag bits; `uscale_version`, `uscale_result_name`, `uscale_backend_name`, `uscale_render_extent`, `uscale_select_backend`, `uscale_profile_flags_from_env` | present | 1 |
 | `universal/include/uscale_vulkan.h` | Vulkan API: `uscale_image`, `uscale_context_create_info`, `uscale_upscale_info`, `uscale_framegen_info`; `uscale_query_caps`, `uscale_context_create`, `uscale_context_backend`, `uscale_record_upscale`, `uscale_record_framegen`, `uscale_retire_frame`, `uscale_context_destroy` | present | 1 |
 | `universal/src/uscale_version.c` | `uscale_version` | present | 1 |
@@ -36,7 +36,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/examples/minimal/` | The example consumer from the integration guide | planned | 6.01 |
 | `docs/integration.md` | How a `-universal` game adds and calls `uscale` | planned | 6.01 |
 | `docs/licences.md` | What each vendor path lets us ship | stub | 5.01 |
-| `.github/workflows/fork-ci.yml` | Our CI: `universal/` on Ubuntu, Windows and macOS; checks no recovered target was built | present | 1, 2.06, 4.01, 4.02 |
+| `.github/workflows/fork-ci.yml` | Our CI: `universal/` on Ubuntu, Windows and macOS, plus `USCALE_WITH_FFX=ON` on Ubuntu; checks no recovered pipeline file was built | present | 1, 2.05, 2.06, 4.01, 4.02 |
 
 ### How it fits together
 
@@ -101,7 +101,7 @@ cmake --build build-uscale --config Release --parallel
 ctest --test-dir build-uscale -C Release --output-on-failure
 ```
 
-- Needs CMake 3.16+ and a C11 compiler; the Vulkan half also needs the Vulkan headers and loader. The lint is the build itself: `-Wall -Wextra -Wpedantic -Werror` (GCC, Clang) or `/W4 /WX` (MSVC).
+- Needs CMake 3.16+ and a C11 compiler; the Vulkan half also needs the Vulkan headers and loader. `USCALE_WITH_FFX=ON` also needs a C++20 compiler for the upstream frame-generation target. The lint is the build itself: `-Wall -Wextra -Wpedantic -Werror` (GCC, Clang) or `/W4 /WX` (MSVC).
 - A new test is a new file `universal/tests/<name>_test.c`; CMake finds it. Name it `uscale_vk_<name>_test.c` when it needs Vulkan.
 - The optional C++20 frame-generation GPU regression is enabled with `-DUSCALE_TEST_FSR3_FRAMEGEN=ON`; see [run instructions and RTX 3090 Ti measurements](framegen-retire.md).
 - Do not build the repo root with its defaults: it compiles the recovered targets. Upstream's `ci.yml` does; ours does not.
@@ -112,7 +112,7 @@ ctest --test-dir build-uscale -C Release --output-on-failure
 |---|---|---|---|
 | Compiler | GCC, Clang | MSVC | Apple Clang |
 | Vulkan | distro loader; lavapipe in CI (2.06) | Vulkan SDK in CI (4.01) | MoltenVK through the loader (4.02) |
-| CI today | pure + Vulkan half | pure half | pure half |
+| CI today | pure + Vulkan half + FFX | pure half | pure half |
 | Runtime libraries | `dlopen` | `LoadLibrary` | `dlopen` |
 | DLSS / XeSS | runtime if present | runtime if present | none: falls back to FSR 3 |
 | Device check | AMD handheld, RTX 3090 Ti desktop (7.01, 7.02) | RTX 3090 Ti desktop (7.02) | Mac mini (7.03) |
