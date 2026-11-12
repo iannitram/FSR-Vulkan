@@ -1,5 +1,7 @@
 # Changelog (fork)
 
+- 2026-11-12 (#21) Detect NVIDIA's DLSS runtime in `uscale_query_caps` on Windows (LoadLibrary search order) and Linux (executable folder, `LD_LIBRARY_PATH`, standard folders), force it unavailable on MoltenVK, and cover present/missing files with a temporary test runtime; licensing answer: [5.01](docs/licences.md#questions-501-answers).
+
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
 - 2026-11-12 (#24) Add install rules and CMake package export (uscaleConfig.cmake, uscale::uscale alias), consumer smoke test project, and uscale_install_check verifying no vendor binaries or models are packaged (SPEC M12).
