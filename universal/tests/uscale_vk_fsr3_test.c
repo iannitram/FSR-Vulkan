@@ -199,7 +199,7 @@ int main(void)
     uscale_result ur;
     uint32_t count = 0, i, family = 0, family_count = 0;
     uint16_t *pixels = NULL;
-    size_t nonzero = 0, n;
+    size_t nonzero = 0, n, px, bad_pixels = 0;
     int use_validation, have_utils;
     float priority = 1.0f;
     VkResult r;
@@ -236,7 +236,17 @@ int main(void)
         destroy_messenger = (PFN_vkDestroyDebugUtilsMessengerEXT)
             vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
         if (create_messenger != NULL)
-            create_messenger(instance, &mci, NULL, &messenger);
+            r = create_messenger(instance, &mci, NULL, &messenger);
+        else
+            r = VK_ERROR_EXTENSION_NOT_PRESENT;
+        if (r != VK_SUCCESS)
+            messenger = VK_NULL_HANDLE;
+    }
+    if (env_is_1("USCALE_REQUIRE_VALIDATION") && messenger == VK_NULL_HANDLE) {
+        fprintf(stderr, "FAIL: validation required but no debug messenger "
+                        "(%s %s)\n", utils_ext, have_utils ? "present, create failed" : "missing");
+        vkDestroyInstance(instance, NULL);
+        return 1;
     }
     printf("Validation layer: %s\n", use_validation ? "on" : "not installed");
 
@@ -407,10 +417,22 @@ int main(void)
         n = (size_t)DW * DH * 4u;
         for (i = 0; i < n; ++i)
             nonzero += (pixels[i] & 0x7fffu) != 0;
+        /* Whole extent: every pixel must have non-zero R, G and B (input is a
+         * uniform clear), so a dispatch covering only a corner fails. */
+        for (px = 0; px < (size_t)DW * DH; ++px) {
+            if ((pixels[px * 4u] & 0x7fffu) == 0 || (pixels[px * 4u + 1u] & 0x7fffu) == 0 ||
+                (pixels[px * 4u + 2u] & 0x7fffu) == 0) {
+                if (bad_pixels == 0)
+                    fprintf(stderr, "first empty pixel: x=%zu y=%zu\n", px % DW, px / DW);
+                bad_pixels++;
+            }
+        }
         vkUnmapMemory(device, readback_mem);
     }
     printf("Output samples that are non-zero: %zu of %zu\n", nonzero, (size_t)DW * DH * 4u);
+    printf("Pixels with an empty RGB channel: %zu of %zu\n", bad_pixels, (size_t)DW * DH);
     CHECK(nonzero > 0);
+    CHECK_INT(bad_pixels, 0);
 
     CHECK_INT(uscale_retire_frame(ctx, 1), USCALE_OK);
     uscale_context_destroy(ctx);

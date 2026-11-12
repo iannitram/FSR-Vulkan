@@ -27,6 +27,10 @@ typedef struct uscale_image {
     VkImageLayout layout; /* layout the image is in when the work is recorded */
 } uscale_image;
 
+/* Device requirement for the FSR 3 backend: the game must create `device` with
+ * the core feature shaderStorageImageWriteWithoutFormat enabled (the upscale
+ * shaders write the output image as a storage image without a format). The
+ * library does not check this; without it the behaviour is undefined. */
 typedef struct uscale_context_create_info {
     uint32_t struct_size;          /* sizeof(uscale_context_create_info) */
     uint32_t api_version;          /* USCALE_VERSION the game was built against */
