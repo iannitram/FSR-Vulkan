@@ -20,7 +20,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/src/uscale_render_extent.c` | `uscale_render_extent` | present | 2.02 |
 | `universal/src/uscale_select.c` | `uscale_select_backend` | present | 2.03 |
 | `universal/src/uscale_profile.c` | `uscale_profile_flags_from_env` | present | 2.04 |
-| `universal/src/uscale_caps.c` | `uscale_query_caps`: vendor, integer dot product, FP16, MoltenVK, FSR 4 assets (vendor runtimes stay 0 until 5.04, 5.06) | present | 3.01, 5.04, 5.06 |
+| `universal/src/uscale_caps.c` | `uscale_query_caps`: vendor, integer dot product, FP16, MoltenVK, FSR 4 assets and NVIDIA DLSS runtime discovery (Windows `nvngx_dlss.dll`, Linux `libnvidia-ngx-dlss.so.<version>`; forced 0 on MoltenVK and non-NVIDIA GPUs; no runtime is shipped; licence answer in [docs/licences.md](licences.md)) | present | 3.01, 5.04, 5.06 |
 | `universal/src/uscale_context.c` | Context lifecycle; picks the backend with `uscale_select_backend`, falls back to FSR 3 if a backend's create fails; routes record calls | present | 3.02 |
 | `universal/src/backend.h` | Internal backend table `uscale_backend_ops` (create, record_upscale, destroy) and the frame-generation calls | present | 1 |
 | `universal/src/backend_fsr3.c`, `.h` | Pure `uscale_fsr3_map_dispatch` to upstream's `FfxVkPortableUpscaleDispatchInfo`: image metadata/layout states, unchanged render-pixel jitter, normalized UV motion scaled by active render size, milliseconds, camera, sharpness, reset and caller frame id; neutral exposure/metre defaults and absent masks; field tests run with Vulkan headers even when FFX is off. GPU lifecycle through `ffx-vulkan::fsr3-vk-backend-1.1.4` remains stubbed | present (mapping); stub (GPU) | 3.03, 3.04, #11 |
@@ -33,6 +33,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/tests/uscale_*_test.c` | Pure tests, run on every platform | present (version) | 2.x |
 | `universal/tests/uscale_vk_*_test.c` | Tests that need the Vulkan half (built only with `USCALE_WITH_VULKAN`) | present (link, device) | 2.06, 3.x, 5.x |
 | `universal/tests/uscale_vk_device_test.c` | Creates an instance, device and queue; CTest skips with code 77 when no device is available, unless `USCALE_REQUIRE_VK_DEVICE=1` | present | 2.06 (#8) |
+| `universal/tests/uscale_vk_dlss_runtime_test.c` | Loads a harmless test library from a temporary directory named like the NVIDIA runtime; checks available, missing, non-NVIDIA and MoltenVK results without a GPU | present | 5.06 |
 | `universal/tests/uscale_vk_framegen_retire_test.cpp` | Opt-in FSR 3.1.6 GPU regression: 1,003 generated frames, bounded live memory and descriptor pools, reserved frame id 0 refused; enable `USCALE_TEST_FSR3_FRAMEGEN` ([run and measurements](framegen-retire.md)) | present | #28 |
 | `universal/examples/minimal/` | The example consumer from the integration guide | planned | 6.01 |
 | `docs/integration.md` | How a `-universal` game adds and calls `uscale` | planned | 6.01 |

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
@@ -12,10 +13,75 @@
 #endif
 
 #include "uscale_vulkan.h"
+#include "runtime_loader.h"
 
 #define USCALE_EXT_DOT_PRODUCT "VK_KHR_shader_integer_dot_product"
 #define USCALE_EXT_FLOAT16 "VK_KHR_shader_float16_int8"
 #define USCALE_EXT_PORTABILITY "VK_KHR_portability_subset" /* MoltenVK advertises it */
+
+/* Internal seam used by the runtime-free test. A NULL directory searches the
+ * process's normal library locations; a non-NULL directory restricts the scan. */
+uint32_t uscale_dlss_runtime_in_dir(const char *directory);
+uint32_t uscale_dlss_runtime_available(uint32_t vendor_id, uint32_t is_moltenvk,
+                                       const char *directory);
+
+uint32_t uscale_dlss_runtime_in_dir(const char *directory)
+{
+#if defined(_WIN32)
+    char path[MAX_PATH];
+    const char *name = "nvngx_dlss.dll";
+    const char *names[] = { name };
+    uscale_runtime *runtime = NULL;
+    if (directory != NULL) {
+        int n = snprintf(path, sizeof(path), "%s\\%s", directory, name);
+        if (n <= 0 || (size_t)n >= sizeof(path)) return 0;
+        names[0] = path;
+    }
+    if (uscale_runtime_open(names, 1, &runtime) != USCALE_OK) return 0;
+    uscale_runtime_close(runtime);
+    return 1;
+#else
+    static const char *const defaults[] = { ".", "/usr/lib", "/usr/lib64",
+        "/usr/lib/x86_64-linux-gnu", "/usr/lib/aarch64-linux-gnu",
+        "/lib", "/lib64", "/lib/x86_64-linux-gnu",
+        "/lib/aarch64-linux-gnu", "/usr/local/lib" };
+    const char *const *dirs = defaults;
+    size_t dir_count = sizeof(defaults) / sizeof(defaults[0]);
+    size_t i;
+    if (directory != NULL) { dirs = &directory; dir_count = 1; }
+    for (i = 0; i < dir_count; ++i) {
+        DIR *dir = opendir(dirs[i]);
+        struct dirent *entry;
+        if (dir == NULL) continue;
+        while ((entry = readdir(dir)) != NULL) {
+            char path[4096];
+            int n;
+            size_t len = strlen(entry->d_name);
+            const char prefix[] = "libnvidia-ngx-dlss.so.";
+            const char *const names[] = { path };
+            uscale_runtime *runtime = NULL;
+            if (strncmp(entry->d_name, prefix, sizeof(prefix) - 1) != 0 ||
+                len == sizeof(prefix) - 1) continue;
+            n = snprintf(path, sizeof(path), "%s/%s", dirs[i], entry->d_name);
+            if (n <= 0 || (size_t)n >= sizeof(path)) continue;
+            if (uscale_runtime_open(names, 1, &runtime) == USCALE_OK) {
+                uscale_runtime_close(runtime);
+                closedir(dir);
+                return 1;
+            }
+        }
+        closedir(dir);
+    }
+    return 0;
+#endif
+}
+
+uint32_t uscale_dlss_runtime_available(uint32_t vendor_id, uint32_t is_moltenvk,
+                                       const char *directory)
+{
+    return vendor_id == 0x10DEu && !is_moltenvk &&
+        uscale_dlss_runtime_in_dir(directory);
+}
 
 static int has_extension(const VkExtensionProperties *exts, uint32_t count, const char *name)
 {
@@ -136,7 +202,8 @@ uscale_result uscale_query_caps(VkPhysicalDevice physical_device,
     caps.has_fp16 = f16_ok && f16.shaderFloat16 == VK_TRUE;
     caps.is_moltenvk = has_extension(exts, ext_count, USCALE_EXT_PORTABILITY);
     caps.fsr4_assets_available = fsr4_asset_dir != NULL && dir_has_entries(fsr4_asset_dir);
-    /* xess_runtime_available and dlss_runtime_available stay 0 until 5.04 and 5.06. */
+    caps.dlss_runtime_available = uscale_dlss_runtime_available(
+        props.vendorID, caps.is_moltenvk, NULL);
 
     free(exts);
     *out_caps = caps;

@@ -1,5 +1,7 @@
 # Changelog (fork)
 
+- 2026-11-12 (#21) Detect NVIDIA's DLSS runtime in `uscale_query_caps` on Windows and Linux, force it unavailable on MoltenVK, and cover present/missing files with a temporary test runtime; licensing answer: [5.01](docs/licences.md#questions-501-answers).
+
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
 - 2026-11-12 (#10) Fill the context lifecycle: create picks the backend with uscale_select_backend, falls back to FSR 3 when its create fails, record calls route through the backend table, destroy frees the backend and frame generation; tested with fake backend ops, no GPU.
