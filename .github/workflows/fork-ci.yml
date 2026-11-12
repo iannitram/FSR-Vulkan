@@ -58,6 +58,30 @@ jobs:
       - name: Test
         shell: bash
         run: ctest --test-dir build-uscale -C Release --output-on-failure
+      - name: Install
+        shell: bash
+        run: cmake --install build-uscale --config Release --prefix build-uscale/install-prefix
+      - name: Consumer
+        shell: bash
+        run: |
+          prefix="$(pwd -W 2>/dev/null || pwd)/build-uscale/install-prefix"
+          cmake -S universal/tests/consumer -B build-uscale/build-consumer -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$prefix"
+          cmake --build build-uscale/build-consumer --config Release
+          ctest --test-dir build-uscale/build-consumer -C Release --output-on-failure --verbose
+      - name: Install check (no vendor binaries or models, SPEC M12)
+        shell: bash
+        run: |
+          python3 universal/scripts/uscale_install_check.py build-uscale/install-prefix
+          # Verify check fails on planted vendor file:
+          mkdir -p build-uscale/fake-prefix/lib
+          cp -R build-uscale/install-prefix/* build-uscale/fake-prefix/
+          touch build-uscale/fake-prefix/lib/nvngx_dlss.dll
+          if python3 universal/scripts/uscale_install_check.py build-uscale/fake-prefix; then
+            echo "Expected check to fail on planted vendor file!"
+            exit 1
+          fi
+          rm -rf build-uscale/fake-prefix
+          python3 universal/scripts/uscale_install_check.py --test-planted build-uscale/install-prefix
       - name: Recovered pipelines are not built (ruling 2026-11-01)
         shell: bash
         run: |

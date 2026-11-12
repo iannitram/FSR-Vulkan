@@ -3,6 +3,7 @@
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
 - 2026-11-12 (#15) Build the Vulkan half and the FSR targets (USCALE_WITH_FFX=ON) on macOS in CI with Apple Clang and Homebrew vulkan-headers, vulkan-loader and molten-vk, and run every test that needs no GPU; the FFX=OFF mac build stays as its own matrix entry.
+- 2026-11-12 (#24) Add install rules and CMake package export (uscaleConfig.cmake, uscale::uscale alias), consumer smoke test project, and uscale_install_check verifying no vendor binaries or models are packaged (SPEC M12).
 - 2026-11-12 (#10) Fill the context lifecycle: create picks the backend with uscale_select_backend, falls back to FSR 3 when its create fails, record calls route through the backend table, destroy frees the backend and frame generation; tested with fake backend ops, no GPU.
 - 2026-11-12 (#16) Fill `docs/licences.md` from the NVIDIA RTX SDKs licence, Intel's XeSS licence and AMD's FidelityFX licence: a game may redistribute the DLSS and XeSS runtimes with notices, XeSS has no Linux runtime, the DLSS headers cannot be committed, and no terms were found for the v07 FSR 4 asset files; SPEC's DLSS risk line points to it.
 - 2026-11-12 (#9) Fill uscale_query_caps from the physical device: vendor id, integer dot product, FP16, MoltenVK and FSR 4 asset folder; vendor runtimes stay 0; caps test on lavapipe. Stage 2 (#3-#8) marked done on the roadmap.
