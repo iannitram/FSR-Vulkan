@@ -34,15 +34,14 @@ include(FetchContent)
 FetchContent_Declare(uscale_source
     GIT_REPOSITORY https://github.com/iannitram/FSR-Vulkan.git
     GIT_TAG        main
-    GIT_SHALLOW    TRUE)
-FetchContent_GetProperties(uscale_source)
-if(NOT uscale_source_POPULATED)
-    FetchContent_Populate(uscale_source)
-endif()
-add_subdirectory(${uscale_source_SOURCE_DIR}/universal
-                 ${uscale_source_BINARY_DIR}/universal)
+    GIT_SHALLOW    TRUE
+    SOURCE_SUBDIR  universal)
+FetchContent_MakeAvailable(uscale_source)
 target_link_libraries(game PRIVATE uscale::uscale)
 ```
+
+`SOURCE_SUBDIR` needs CMake 3.18 or newer in the game's project. Older
+`FetchContent_Populate` recipes are deprecated from CMake 3.30 on.
 
 For a reproducible game build, replace `main` with the reviewed commit or tag
 you have pinned. Both forms define the CMake target `uscale::uscale`. The
