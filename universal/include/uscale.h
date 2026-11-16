@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 #define USCALE_VERSION_MAJOR 0u
-#define USCALE_VERSION_MINOR 1u
+#define USCALE_VERSION_MINOR 2u
 #define USCALE_VERSION_PATCH 0u
 
 /* Packed like Vulkan: major << 22 | minor << 12 | patch. */

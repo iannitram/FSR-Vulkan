@@ -4,6 +4,7 @@
 
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
+- 2026-11-16 (#13) uscale 0.2: FSR 3.1.6 frame generation in two steps, `uscale_record_framegen_prepare` then `uscale_record_framegen_dispatch`, which returns the present plan copied from upstream's `ffxVkFrameGenerationBuildPresentPlan` (generated then real); `uscale_record_framegen` removed; `framegen_color_format` appended to the create info (read only from 0.2 callers); no-GPU validation/plan tests and a two-frame device test.
 - 2026-11-12 (#19) Search for Intel's XeSS runtime with the portable loader and report it in uscale_query_caps (always 0 on MoltenVK); test discovery with a fake runtime without a GPU.
 - 2026-11-12 (#15) Build the Vulkan half and the FSR targets (USCALE_WITH_FFX=ON) on macOS in CI with Apple Clang and Homebrew vulkan-headers, vulkan-loader and molten-vk, and run every test that needs no GPU; the FFX=OFF mac build stays as its own matrix entry.
 - 2026-11-12 (#18) Fill the FSR 4 backend create/destroy through `ffx-vulkan::fsr4-v07-vulkan` with v07 files read only from the game's `fsr4_asset_dir` (names from upstream's helper, size-checked, none committed), gated on integer dot product and FP16, `BB_FSR4_PROFILE`/`BB_FSR4_STATS` passed through; no-asset fallback to FSR 3 and the gate tested without a GPU, the device create is the 7.01 check, per-frame dispatch still a stub.

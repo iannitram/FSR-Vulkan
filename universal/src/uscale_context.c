@@ -2,6 +2,7 @@
  * (code map: universal/src, roadmap 3.02). SPDX-License-Identifier: MIT */
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "backend.h"
 
@@ -42,7 +43,7 @@ static const uscale_backend_ops *ops_for(uscale_backend id)
 static const uscale_framegen_ops *framegen_ops(void)
 {
     static const uscale_framegen_ops real = {
-        uscale_framegen_create, uscale_framegen_record,
+        uscale_framegen_create, uscale_framegen_prepare, uscale_framegen_dispatch,
         uscale_framegen_retire, uscale_framegen_destroy
     };
     if (g_hooks != NULL && g_hooks->framegen != NULL)
@@ -90,21 +91,47 @@ static uscale_result start_backend(uscale_backend id, const uscale_context_creat
     return USCALE_OK;
 }
 
-uscale_result uscale_context_create(const uscale_context_create_info *info,
+/* 0.1's struct ended before framegen_color_format. */
+#define USCALE_CREATE_INFO_SIZE_0_1 offsetof(uscale_context_create_info, framegen_color_format)
+#define USCALE_CREATE_INFO_FORMAT_END \
+    (offsetof(uscale_context_create_info, framegen_color_format) + sizeof(VkFormat))
+
+uscale_result uscale_context_create(const uscale_context_create_info *caller_info,
                                     uscale_context **out_context)
 {
+    uscale_context_create_info local;
+    const uscale_context_create_info *info = &local;
     uscale_device_caps caps;
     uscale_context *ctx;
     uscale_backend chosen;
     const char *reason;
     uscale_result r;
+    int want_framegen;
 
     if (out_context != NULL)
         *out_context = NULL;
-    if (info == NULL || out_context == NULL)
+    if (caller_info == NULL || out_context == NULL)
         return USCALE_ERROR_INVALID_ARGUMENT;
-    if (info->struct_size < sizeof(*info) || (info->api_version >> 22u) != USCALE_VERSION_MAJOR)
+    if (caller_info->struct_size < USCALE_CREATE_INFO_SIZE_0_1 ||
+        (caller_info->api_version >> 22u) != USCALE_VERSION_MAJOR)
         return USCALE_ERROR_VERSION_MISMATCH;
+
+    /* Read nothing past the caller's struct_size: backends see a copy whose
+     * newer fields are zero. On 64-bit ABIs 0.1's struct is padded to the same
+     * size, so framegen_color_format also needs an api_version of 0.2 or later. */
+    memset(&local, 0, sizeof(local));
+    memcpy(&local, caller_info,
+           caller_info->struct_size < sizeof(local) ? caller_info->struct_size : sizeof(local));
+    if (caller_info->struct_size < USCALE_CREATE_INFO_FORMAT_END ||
+        caller_info->api_version < USCALE_MAKE_VERSION(0u, 2u, 0u))
+        local.framegen_color_format = VK_FORMAT_UNDEFINED;
+    local.struct_size = (uint32_t)sizeof(local);
+
+    want_framegen = info->enable_frame_generation != 0 &&
+                    info->framegen_color_format != VK_FORMAT_UNDEFINED;
+    if (want_framegen && info->framegen_color_format != VK_FORMAT_R8G8B8A8_UNORM &&
+        info->framegen_color_format != VK_FORMAT_R16G16B16A16_SFLOAT)
+        return USCALE_ERROR_UNSUPPORTED; /* upstream's frame generation takes only these */
 
     r = query_caps(info, &caps);
     if (r != USCALE_OK)
@@ -131,7 +158,7 @@ uscale_result uscale_context_create(const uscale_context_create_info *info,
     ctx->backend = chosen;
     ctx->reason = reason;
 
-    if (info->enable_frame_generation != 0) {
+    if (want_framegen) {
         const uscale_framegen_ops *fg = framegen_ops();
 
         r = fg->create(info, &ctx->framegen_state);
@@ -167,7 +194,8 @@ uscale_result uscale_record_upscale(uscale_context *context, const uscale_upscal
     return context->ops->record_upscale(context->state, info);
 }
 
-uscale_result uscale_record_framegen(uscale_context *context, const uscale_framegen_info *info)
+uscale_result uscale_record_framegen_prepare(uscale_context *context,
+                                             const uscale_framegen_prepare_info *info)
 {
     if (context == NULL || info == NULL)
         return USCALE_ERROR_INVALID_ARGUMENT;
@@ -175,7 +203,22 @@ uscale_result uscale_record_framegen(uscale_context *context, const uscale_frame
         return USCALE_ERROR_VERSION_MISMATCH;
     if (context->framegen == NULL)
         return USCALE_ERROR_UNSUPPORTED; /* frame generation was not asked for */
-    return context->framegen->record(context->framegen_state, info);
+    return context->framegen->prepare(context->framegen_state, info);
+}
+
+uscale_result uscale_record_framegen_dispatch(uscale_context *context,
+                                              const uscale_framegen_dispatch_info *info,
+                                              uscale_present_plan *out_plan)
+{
+    if (out_plan != NULL)
+        memset(out_plan, 0, sizeof(*out_plan));
+    if (context == NULL || info == NULL || out_plan == NULL)
+        return USCALE_ERROR_INVALID_ARGUMENT;
+    if (info->struct_size < sizeof(*info))
+        return USCALE_ERROR_VERSION_MISMATCH;
+    if (context->framegen == NULL)
+        return USCALE_ERROR_UNSUPPORTED; /* frame generation was not asked for */
+    return context->framegen->dispatch(context->framegen_state, info, out_plan);
 }
 
 uscale_result uscale_retire_frame(uscale_context *context, uint64_t frame_id)

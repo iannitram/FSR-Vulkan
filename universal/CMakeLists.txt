@@ -2,7 +2,7 @@
 # Builds standalone: cmake -S universal -B build-uscale
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.16)
-project(uscale VERSION 0.1.0 LANGUAGES C)
+project(uscale VERSION 0.2.0 LANGUAGES C)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -137,6 +137,9 @@ if(USCALE_BUILD_TESTS)
         if(_test_name STREQUAL "uscale_vk_fsr4_backend_test" AND NOT USCALE_WITH_FFX)
             continue() # names the v07 files with upstream's helper
         endif()
+        if(_test_name STREQUAL "uscale_vk_framegen_gpu_test" AND NOT USCALE_WITH_FFX)
+            continue() # needs upstream's FSR 3.1.6 frame generation
+        endif()
         add_executable(${_test_name} ${_test_src})
         target_include_directories(${_test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
         if(_test_name MATCHES "^uscale_vk_")
@@ -145,10 +148,19 @@ if(USCALE_BUILD_TESTS)
             target_link_libraries(${_test_name} PRIVATE uscale_core)
         endif()
         if(_test_name STREQUAL "uscale_vk_fsr3_dispatch_test" OR _test_name STREQUAL "uscale_vk_context_test"
-           OR _test_name STREQUAL "uscale_vk_fsr4_backend_test")
+           OR _test_name STREQUAL "uscale_vk_fsr4_backend_test"
+           OR _test_name STREQUAL "uscale_vk_framegen_test")
             # Internal headers (backend.h, backend_fsr3.h): no FFX build or GPU needed.
             target_include_directories(${_test_name} PRIVATE
                 ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+        endif()
+        if(_test_name STREQUAL "uscale_vk_framegen_test" AND USCALE_WITH_FFX)
+            # Swaps upstream's FSR 3.1.6 calls for fakes; compares with its present plan.
+            target_compile_definitions(${_test_name} PRIVATE USCALE_HAVE_FFX)
+            target_link_libraries(${_test_name} PRIVATE ffx-vulkan::framegeneration-presenter-policy)
+        endif()
+        if(_test_name STREQUAL "uscale_vk_framegen_gpu_test")
+            target_include_directories(${_test_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
         endif()
         uscale_warnings(${_test_name})
         if(_test_name STREQUAL "uscale_runtime_loader_test")
@@ -188,7 +200,7 @@ if(USCALE_BUILD_TESTS)
             add_test(NAME ${_test_name} COMMAND ${_test_name})
         endif()
         if(_test_name STREQUAL "uscale_vk_device_test" OR _test_name STREQUAL "uscale_vk_caps_test"
-           OR _test_name STREQUAL "uscale_vk_fsr3_test")
+           OR _test_name STREQUAL "uscale_vk_fsr3_test" OR _test_name STREQUAL "uscale_vk_framegen_gpu_test")
             set_tests_properties(${_test_name} PROPERTIES SKIP_RETURN_CODE 77)
         endif()
     endforeach()
