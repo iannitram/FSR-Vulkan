@@ -97,10 +97,19 @@ static uscale_result fg_create(const uscale_context_create_info *i, void **o)
     g_live++;
     return USCALE_OK;
 }
-static uscale_result fg_record(void *s, const uscale_framegen_info *i)
+static uscale_result fg_prepare(void *s, const uscale_framegen_prepare_info *i)
 {
     (void)s;
     (void)i;
+    g_fg_recorded++;
+    return USCALE_OK;
+}
+static uscale_result fg_dispatch(void *s, const uscale_framegen_dispatch_info *i,
+                                 uscale_present_plan *p)
+{
+    (void)s;
+    (void)i;
+    p->slot_count = 1;
     g_fg_recorded++;
     return USCALE_OK;
 }
@@ -117,7 +126,7 @@ static void fg_destroy(void *s)
     free(s);
 }
 
-static const uscale_framegen_ops k_fg = {fg_create, fg_record, fg_retire, fg_destroy};
+static const uscale_framegen_ops k_fg = {fg_create, fg_prepare, fg_dispatch, fg_retire, fg_destroy};
 static const uscale_context_hooks k_hooks = {fake_ops_for, fake_caps, &k_fg};
 
 static void reset(void)
@@ -152,11 +161,14 @@ int main(void)
     uscale_context *ctx = NULL;
     const char *reason = NULL;
     uscale_upscale_info up = {0};
-    uscale_framegen_info fg = {0};
+    uscale_framegen_prepare_info fg = {0};
+    uscale_framegen_dispatch_info fd = {0};
+    uscale_present_plan plan;
 
     uscale_context_set_hooks(&k_hooks);
     up.struct_size = sizeof(up);
     fg.struct_size = sizeof(fg);
+    fd.struct_size = sizeof(fd);
 
     /* AUTO on a plain device: FSR 3, created once. */
     reset();
@@ -224,10 +236,13 @@ int main(void)
     /* Frame generation: created, routed, retired and destroyed with the context. */
     reset();
     info.enable_frame_generation = 1;
+    info.framegen_color_format = VK_FORMAT_R8G8B8A8_UNORM;
     CHECK_INT(uscale_context_create(&info, &ctx), USCALE_OK);
     CHECK_INT(g_live, 2);
-    CHECK_INT(uscale_record_framegen(ctx, &fg), USCALE_OK);
-    CHECK_INT(g_fg_recorded, 1);
+    CHECK_INT(uscale_record_framegen_prepare(ctx, &fg), USCALE_OK);
+    CHECK_INT(uscale_record_framegen_dispatch(ctx, &fd, &plan), USCALE_OK);
+    CHECK_INT(plan.slot_count, 1);
+    CHECK_INT(g_fg_recorded, 2);
     CHECK_INT(uscale_retire_frame(ctx, 42), USCALE_OK);
     CHECK_INT(g_fg_retired, 42);
     uscale_context_destroy(ctx);
@@ -245,7 +260,9 @@ int main(void)
     reset();
     info.enable_frame_generation = 0;
     CHECK_INT(uscale_context_create(&info, &ctx), USCALE_OK);
-    CHECK_INT(uscale_record_framegen(ctx, &fg), USCALE_ERROR_UNSUPPORTED);
+    CHECK_INT(uscale_record_framegen_prepare(ctx, &fg), USCALE_ERROR_UNSUPPORTED);
+    CHECK_INT(uscale_record_framegen_dispatch(ctx, &fd, &plan), USCALE_ERROR_UNSUPPORTED);
+    CHECK_INT(plan.slot_count, 0);
     CHECK_INT(uscale_retire_frame(ctx, 1), USCALE_OK);
     uscale_context_destroy(ctx);
     CHECK_INT(g_live, 0);
@@ -261,7 +278,8 @@ int main(void)
     info.api_version = USCALE_MAKE_VERSION(USCALE_VERSION_MAJOR + 1, 0, 0);
     CHECK_INT(uscale_context_create(&info, &ctx), USCALE_ERROR_VERSION_MISMATCH);
     CHECK_INT(uscale_record_upscale(NULL, &up), USCALE_ERROR_INVALID_ARGUMENT);
-    CHECK_INT(uscale_record_framegen(NULL, &fg), USCALE_ERROR_INVALID_ARGUMENT);
+    CHECK_INT(uscale_record_framegen_prepare(NULL, &fg), USCALE_ERROR_INVALID_ARGUMENT);
+    CHECK_INT(uscale_record_framegen_dispatch(NULL, &fd, &plan), USCALE_ERROR_INVALID_ARGUMENT);
     CHECK_INT(uscale_retire_frame(NULL, 1), USCALE_ERROR_INVALID_ARGUMENT);
     uscale_context_destroy(NULL);
     CHECK_INT(uscale_context_backend(NULL, &reason), USCALE_BACKEND_AUTO);

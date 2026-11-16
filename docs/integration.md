@@ -114,13 +114,98 @@ The call sequence is:
    handles/views/formats/extents/layouts, active render extent, pixel jitter,
    frame time, sharpness and camera values. Call `uscale_record_upscale` while
    recording the frame's commands.
-4. If frame generation is enabled, fill `uscale_framegen_info` with the real
-   display-size color image and a distinct generated image, increasing
-   `frame_id` by one for every real frame, then call
-   `uscale_record_framegen`.
+4. If frame generation is enabled, record it in two steps each real frame,
+   after the scene is rendered (see [Frame generation](#frame-generation)):
+   `uscale_record_framegen_prepare`, then `uscale_record_framegen_dispatch`,
+   which returns the present plan.
 5. After the game's fence for a frame signals, call
    `uscale_retire_frame(context, frame_id)`. Destroy the context with
    `uscale_context_destroy` when the renderer shuts down.
+
+## Frame generation
+
+FSR 3.1.6 frame generation and upstream's presenter policy. The game keeps
+its swapchain: the library never acquires, presents or owns it.
+
+Create the context with `enable_frame_generation = 1` and
+`framegen_color_format` set to `VK_FORMAT_R8G8B8A8_UNORM` or
+`VK_FORMAT_R16G16B16A16_SFLOAT` (anything else is
+`USCALE_ERROR_UNSUPPORTED`). The field was added in 0.2: it is read only when
+`struct_size` covers it and `api_version` is 0.2 or later, so a caller built
+against 0.1 gets a working context without frame generation. When the device
+offers `VK_KHR_compute_shader_derivatives`, enable it with its
+`computeDerivativeGroupLinear` feature, because upstream's frame-generation shaders use it.
+
+Images:
+
+- the real frame (`present_color`): display size, the context's colour format,
+  sampled and a transfer source;
+- `depth`: render size, `VK_FORMAT_R32_SFLOAT`, sampled (a colour image, not a
+  D32 depth image; copy or write depth into it);
+- `motion`: render size, `R16G16_SFLOAT`, sampled, the same UV convention as
+  `uscale_upscale_info`;
+- `generated`: display size, the context's colour format, sampled and storage,
+  distinct from every input;
+- `distortion`: optional `R16G16_SFLOAT`, sampled; `image = VK_NULL_HANDLE` for none.
+
+Each real frame:
+
+1. Render the scene into the real frame.
+2. Fill `uscale_framegen_prepare_info` (the real frame, depth, motion, render
+   extent, jitter, frame time, camera near/far/FOV, `view_space_to_meters`,
+   camera vectors, luminance range, transfer function, `frame_id`, `reset`)
+   and call `uscale_record_framegen_prepare`. `frame_id` is above 0 and goes
+   up by one each real frame.
+3. Acquire two swapchain images, the generated target first and then the real
+   target, and describe the outcome in `uscale_acquired_images` (`paired = 0`
+   when only the first image was acquired).
+4. Fill `uscale_framegen_dispatch_info` with the same real frame, the
+   `generated` image, frame time, the same `frame_id`, `reset` and the acquire
+   outcome, then call `uscale_record_framegen_dispatch`. It reuses the
+   prepare's camera, luminance and transfer values.
+5. Record, submit and present `out_plan->slots` in order. Two slots are always
+   the generated target then the real target. When `use_generated = 1`, copy or
+   draw the `generated` image into that slot's swapchain image; otherwise draw
+   the real frame. On a `reset` frame, slot 0 shows the real scene but must
+   still be presented to release its image. One slot means present normally.
+6. After the frame's fence signals, call `uscale_retire_frame(context, frame_id)`.
+
+```c
+uscale_framegen_prepare_info prep = { sizeof(prep) };
+/* ... fill prep ... */
+uscale_record_framegen_prepare(ctx, &prep);
+
+uscale_framegen_dispatch_info disp = { sizeof(disp) };
+/* ... fill disp, disp.frame_id = prep.frame_id, disp.acquired = ... */
+uscale_present_plan plan;
+if (uscale_record_framegen_dispatch(ctx, &disp, &plan) == USCALE_ERROR_INVALID_ARGUMENT &&
+    plan.slot_count == 0) {
+    /* bad input or an acquire outcome that cannot be planned: recreate the swapchain */
+}
+for (uint32_t i = 0; i < plan.slot_count; ++i) {
+    /* draw plan.slots[i].use_generated ? generated : real frame into
+       plan.slots[i].image_index, wait on plan.slots[i].image_available,
+       submit and present */
+}
+```
+
+Rules:
+
+- A dispatch must follow its own prepare. A dispatch with no prepare for that
+  `frame_id`, or a stale one, is `USCALE_ERROR_INVALID_ARGUMENT` and records
+  nothing.
+- Every float must be finite; `frame_time_ms`, `camera_near`, `camera_fov_y`
+  and `view_space_to_meters` must be above 0, `camera_far` above
+  `camera_near`, and `0 <= min_luminance <= max_luminance`. A value outside
+  these rules is `USCALE_ERROR_INVALID_ARGUMENT` and records nothing.
+- An acquire outcome upstream cannot plan, for example duplicate indices, is
+  `USCALE_ERROR_INVALID_ARGUMENT`: recreate the swapchain.
+- If upstream fails after recording started, the call returns that error and
+  still fills the plan with slot 0 showing the real scene, so both acquired
+  images can be presented. Retire that frame before the next prepare, as you
+  must for any prepare that has no successful dispatch.
+- Built without `USCALE_WITH_FFX`, or on a context created without frame
+  generation, both calls return `USCALE_ERROR_UNSUPPORTED`.
 
 Keep image layouts accurate: each `uscale_image.layout` is the layout when
 the recorded work begins. The application remains responsible for barriers,
