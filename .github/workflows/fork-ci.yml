@@ -90,3 +90,9 @@ jobs:
           hits=$(find build-uscale -type f \( -iname '*xess_recovered*' -o -iname '*dlss_contract*' -o -iname '*d4r_*' \) -print -quit)
           if [ -n "$hits" ]; then echo "Forbidden targets were built:"; echo "$hits"; exit 1; fi
           echo "none built"
+      - name: Configure minimal integration example
+        shell: bash
+        run: cmake -S universal/examples/minimal -B build-minimal -DCMAKE_BUILD_TYPE=Release
+      - name: Build minimal integration example
+        shell: bash
+        run: cmake --build build-minimal --config Release --parallel
