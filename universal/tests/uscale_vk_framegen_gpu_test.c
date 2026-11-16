@@ -28,6 +28,10 @@ static int g_validation_errors = 0;
  * enable it; only those shader-module messages are then tolerated. */
 static int g_have_derivatives = 0;
 static int g_tolerated = 0;
+/* The validation layer's spec version. Layers older than 1.4 (Ubuntu 24.04
+ * ships 1.3.275) predate VK_KHR_compute_shader_derivatives and flag the
+ * shaders even when the device enables it, so those messages are tolerated. */
+static uint32_t g_layer_spec = 0;
 
 static int env_is_1(const char *name)
 {
@@ -49,7 +53,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL on_message(VkDebugUtilsMessageSeverityFlag
 {
     (void)types;
     (void)user;
-    if ((severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) && !g_have_derivatives &&
+    if ((severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) &&
+        (!g_have_derivatives || g_layer_spec < VK_MAKE_API_VERSION(0, 1, 4, 0)) &&
         (strstr(data->pMessage, "compute_shader_derivatives") != NULL ||
          strstr(data->pMessage, "ComputeDerivativeGroup") != NULL)) {
         g_tolerated++;
@@ -72,7 +77,12 @@ static int has_instance_name(const char *name, int layer)
         p = calloc(n ? n : 1, sizeof(*p));
         if (p == NULL) return 0;
         vkEnumerateInstanceLayerProperties(&n, p);
-        for (i = 0; i < n; ++i) found |= strcmp(p[i].layerName, name) == 0;
+        for (i = 0; i < n; ++i) {
+            if (strcmp(p[i].layerName, name) == 0) {
+                found = 1;
+                g_layer_spec = p[i].specVersion;
+            }
+        }
         free(p);
     } else {
         VkExtensionProperties *p;
@@ -554,7 +564,9 @@ int main(void)
     vkDestroyInstance(instance, NULL);
     if (g_tolerated != 0)
         printf("WARNING: %d compute-shader-derivative messages tolerated: the device does "
-               "not offer %s\n", g_tolerated, derivatives_ext);
+               "not offer %s, or the validation layer (%u.%u.%u) predates it\n", g_tolerated,
+               derivatives_ext, VK_API_VERSION_MAJOR(g_layer_spec),
+               VK_API_VERSION_MINOR(g_layer_spec), VK_API_VERSION_PATCH(g_layer_spec));
     CHECK_INT(g_validation_errors, 0);
     USCALE_TEST_END;
 }
