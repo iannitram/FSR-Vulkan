@@ -1,6 +1,6 @@
 # Roadmap to 1.0
 
-Updated: 2026-11-12
+Updated: 2026-11-18
 
 features:
 - api: Stable, versioned C API in two headers, the same calls on every backend (M1, M2)
@@ -99,6 +99,21 @@ Each stage's issues can run in parallel unless a `Blocked by` line says otherwis
 | 7.01 | #25 AMD handheld, Linux: FSR 3, frame generation, FSR 4, profiling | Medium | wiring |
 | 7.02 | #26 RTX 3090 Ti desktop, Windows and Linux: FSR 3, frame generation, DLSS, XeSS | Medium | wiring |
 | 7.03 | #27 Mac mini, MoltenVK: FSR 3 and frame generation | Medium | wiring |
+
+### 7b. Added since this roadmap was written (fixes, peer work, follow-ups)
+
+Issues filed after the stage tables above. Each carries a `feature:` label and the `1.0` milestone.
+
+| Id | Issue | Size | Kind | State |
+|---|---|---|---|---|
+| 7b.01 | #28 Frame generation: free the per-frame constant buffers (from Uncharted-Universal's patch) | Medium | state | closed |
+| 7b.02 | #35 Memory: host-visible device-local fallback on unified-memory devices (peer) | Easy | pure-fn | closed |
+| 7b.03 | #36 Mac: libc++ fixes for upstream's FFX 1.1.4 sources (peers; for 4.02) | Medium | wiring | closed |
+| 7b.04 | #50 AMD FidelityFX SDK v2.4.0 buffer-usage flags fix (peer, adopt) | Medium | pure-fn | closed |
+| 7b.05 | #53 docs: say the Linux build probes `libxess.so` (no Intel Linux runtime today) | Medium | docs | closed |
+| 7b.06 | #29 Adapter for the shared shadPS4 core's upscaler hand-off (shadPS4 C11) | Medium | wiring | open |
+| 7b.07 | #57 Integration guide: turn `USCALE_BUILD_TESTS` off in the FetchContent recipe | Easy | docs | open |
+| 7b.08 | #58 Frame generation: accept D32 depth by copying it to `R32_SFLOAT` inside the library | Medium | wiring | open |
 
 ### 8. Design pass and 1.0
 

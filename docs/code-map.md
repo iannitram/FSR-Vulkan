@@ -2,7 +2,7 @@
 
 - **Repo:** iannitram/FSR-Vulkan (public fork). **Kind:** fork built our way: our shared upscaler and frame-generation library (`uscale`) for the `-universal` games, a C11 library built with CMake on top of upstream's portable Vulkan scalers.
 - **Upstream:** FireBurn/UniversalScalers-Vulkan (formerly FireBurn/FSR-Vulkan), `upstream/main`, synced daily. **Integration branch:** `main`.
-- **Describes:** main after the Roadmap commit of 2026-11-02 (upstream at `69fecd7`).
+- **Describes:** main at `ae06a96` (2026-11-16), checked against `universal/` on 2026-11-18.
 
 The game owns the Vulkan instance, device, queues, command buffers, swapchain and images. `uscale` picks a backend, records upscaling and frame-generation work into the game's command buffer, and never submits or presents. How FSR 4, XeSS and DLSS reach the GPU: `docs/adr/0001-vendor-paths.md`.
 
@@ -32,6 +32,10 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/tests/uscale_test.h` | Test harness: `CHECK`, `CHECK_INT`, `CHECK_STR`, `USCALE_TEST_END` | present | 1 |
 | `universal/tests/uscale_*_test.c` | Pure tests, run on every platform | present (version) | 2.x |
 | `universal/tests/uscale_vk_*_test.c` | Tests that need the Vulkan half (built only with `USCALE_WITH_VULKAN`) | present (link, device) | 2.06, 3.x, 5.x |
+| `universal/tests/uscale_runtime_loader_test.c`, `universal/tests/runtime_loader_fixture.c` | Pure test of `runtime_loader.c` against a harmless fixture library built by CMake; no vendor file | present | 5.02 |
+| `universal/tests/uscale_vk_caps_test.c`, `uscale_vk_caps_runtime_test.c` | `uscale_query_caps` on a real device and with planted XeSS/DLSS runtimes | present | 3.01, 5.04 |
+| `universal/tests/uscale_vk_context_test.c`, `uscale_vk_link_test.c` | Context create, fallback and the Vulkan half's link check | present | 3.02, 2.05 |
+| `universal/tests/uscale_vk_fsr3_dispatch_test.c`, `uscale_vk_fsr4_backend_test.c` | `uscale_fsr3_map_dispatch` field mapping; FSR 4 create/asset checks without a GPU | present | 3.03, 5.03 |
 | `universal/tests/uscale_vk_device_test.c` | Creates an instance, device and queue; CTest skips with code 77 when no device is available, unless `USCALE_REQUIRE_VK_DEVICE=1` | present | 2.06 (#8) |
 | `universal/tests/uscale_vk_dlss_runtime_test.c` | Loads a harmless test library from a temporary directory named like the NVIDIA runtime; checks available, missing, non-NVIDIA and MoltenVK results without a GPU | present | 5.06 |
 | `universal/tests/uscale_vk_fsr3_test.c` | FSR 3 on a real device (lavapipe preferred): upscales 640x360 to 1280x720 over two frames, checks a non-empty output and no validation errors (Khronos layer when installed; `USCALE_REQUIRE_VALIDATION=1` makes it required); built only with `USCALE_WITH_FFX`; skips with 77 without a device unless `USCALE_REQUIRE_VK_DEVICE=1` | present | 3.04 (#12) |
@@ -43,7 +47,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/tests/consumer/` | Tiny consumer smoke project: finds `uscale` via `find_package(uscale CONFIG REQUIRED)` and links `uscale::uscale` | present | 6.02 |
 | `universal/examples/minimal/` | Cross-platform CMake consumer that links `uscale::uscale` and calls the platform independent API; built in each CI job | present | 6.01 |
 | `docs/integration.md` | How a `-universal` game adds `uscale` with `add_subdirectory` or FetchContent and calls its C and Vulkan APIs | present | 6.01 |
-| `docs/licences.md` | What each vendor path lets us ship | stub | 5.01 |
+| `docs/licences.md` | What each vendor path lets us ship (checked 2026-11-12) | present | 5.01 |
 | `.github/workflows/fork-ci.yml` | Our CI: `universal/` and the minimal integration example on Ubuntu, Windows and macOS, plus `USCALE_WITH_FFX=ON` on Ubuntu; Linux installs Mesa and pins lavapipe, requires device tests to run; tests `cmake --install`, downstream consumer project build and `uscale_install_check` (clean and planted fail) on all platforms; checks no recovered pipeline file was built | present | 1, 2.05, 2.06, 4.01, 4.02, 6.01, 6.02 |
 
 ### How it fits together
