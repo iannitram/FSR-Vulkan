@@ -43,7 +43,7 @@ Each stage's issues can run in parallel unless a `Blocked by` line says otherwis
 
 ### 1. Skeleton (done, 2026-11-02)
 
-`universal/` with both headers, one stub file per module, the CTest harness (`tests/uscale_test.h`, every `tests/*_test.c` is a test), and `fork-ci.yml` on Linux, Windows and macOS. The pure half builds everywhere; the Vulkan half builds where the Vulkan headers are found (Linux CI today).
+`universal/` with both headers, one stub file per module, the CTest harness (`tests/uscale_test.h`, every `tests/*_test.c` is a test), and `fork-ci.yml` on Linux and Windows. The pure half builds everywhere; the Vulkan half builds where the Vulkan headers are found (Linux CI today).
 
 ### 2. Core API and build wiring (all platforms) (done, 2026-11-12)
 

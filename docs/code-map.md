@@ -48,7 +48,7 @@ Status: **present** = built and tested; **stub** = file exists, returns `USCALE_
 | `universal/examples/minimal/` | Cross-platform CMake consumer that links `uscale::uscale` and calls the platform independent API; built in each CI job | present | 6.01 |
 | `docs/integration.md` | How a `-universal` game adds `uscale` with `add_subdirectory` or FetchContent and calls its C and Vulkan APIs | present | 6.01 |
 | `docs/licences.md` | What each vendor path lets us ship (checked 2026-11-12) | present | 5.01 |
-| `.github/workflows/fork-ci.yml` | Our CI: `universal/` and the minimal integration example on Ubuntu, Windows and macOS, plus `USCALE_WITH_FFX=ON` on Ubuntu; Linux installs Mesa and pins lavapipe, requires device tests to run; tests `cmake --install`, downstream consumer project build and `uscale_install_check` (clean and planted fail) on all platforms; checks no recovered pipeline file was built | present | 1, 2.05, 2.06, 4.01, 4.02, 6.01, 6.02 |
+| `.github/workflows/fork-ci.yml` | Our CI: `universal/` and the minimal integration example on Ubuntu and Windows, plus `USCALE_WITH_FFX=ON` on Ubuntu; Linux installs Mesa and pins lavapipe, requires device tests to run; tests `cmake --install`, downstream consumer project build and `uscale_install_check` (clean and planted fail) on both platforms; checks no recovered pipeline file was built | present | 1, 2.05, 2.06, 4.01, 4.02, 6.01, 6.02 |
 
 ### How it fits together
 

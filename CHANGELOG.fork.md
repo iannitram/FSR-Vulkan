@@ -4,6 +4,7 @@
 
 Newest first. One line per change of stage, release or decision that the next session needs. Upstream has no CHANGELOG; this file is ours and sits beside upstream's files.
 
+- 2026-11-18 (#62) Drop the macOS legs (FFX off and on) from `fork-ci.yml` and their MoltenVK install and prefix-path steps: Vulkan needs no Mac test (owner ruling); Linux and Windows legs unchanged.
 - 2026-11-18 PM doc audit: ROADMAP stage 7b lists the issues added since the roadmap was written; code map covers the runtime_loader, caps, context/link and FSR 3/4 tests.
 - 2026-11-16 (#13) uscale 0.2: FSR 3.1.6 frame generation in two steps, `uscale_record_framegen_prepare` then `uscale_record_framegen_dispatch`, which returns the present plan copied from upstream's `ffxVkFrameGenerationBuildPresentPlan` (generated then real); `uscale_record_framegen` removed; `framegen_color_format` appended to the create info (read only from 0.2 callers); no-GPU validation/plan tests and a two-frame device test.
 - 2026-11-12 (#19) Search for Intel's XeSS runtime with the portable loader and report it in uscale_query_caps (always 0 on MoltenVK); test discovery with a fake runtime without a GPU.
