@@ -33,3 +33,5 @@ We keep upstream's files as they are, but we never run the model-extraction tool
 - Never build, package, publish or commit anything produced by those tools. That includes the "recovered" XeSS and DLSS pipelines (for example `examples/xess-recovered/`, the `ffx-vulkan::xess-recovered` and `ffx-vulkan::dlss-contract` targets) and any model data derived from them. Our builds link only the targets `universal/` names, so these are never compiled.
 - Keeping the upstream files in the tree is fine. Reading them is fine. Running them or releasing their output is not.
 - If a job seems to need one of these tools, stop and ask me. Do not work around this rule.
+
+**Upstream and peers:** see `PEERS.md` at the repo root. When I say "upstream", I mean the repo in its Upstream section; reuse a peer's code only as that file allows.
